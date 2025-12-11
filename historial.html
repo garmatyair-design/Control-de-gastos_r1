@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Historial — Gastos</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="header">
+    <div><h1>Historial de Reportes</h1></div>
+    <nav>
+      <a href="dashboard.html" class="btn-outline">Dashboard</a>
+      <button id="btnSignOut3" class="btn-outline">Salir</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>Filtrar</h2>
+      <div class="form-grid">
+        <input id="filtroMes" type="month">
+        <select id="filtroCategoria"><option value="">Todas</option><option>Alimentos</option><option>Hospedaje</option><option>Transporte</option><option>Casetas</option><option>Varios</option></select>
+        <button id="btnFiltrar" class="btn-blue">Aplicar</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Reportes</h2>
+      <div id="histList" class="list"></div>
+    </section>
+  </main>
+
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
