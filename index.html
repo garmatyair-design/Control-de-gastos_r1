@@ -2,49 +2,52 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Comprobación de Gastos — Login</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <main class="auth-container">
-    <div class="auth-card">
-      <h1>Comprobación de Gastos</h1>
-      <p class="muted">Inicia sesión o crea una cuenta</p>
 
-      <div class="tabs-auth">
-        <button id="tabSignIn" class="tab-auth active">Entrar</button>
-        <button id="tabSignUp" class="tab-auth">Registrar</button>
-      </div>
+<main class="auth-container">
+  <div class="auth-card">
+    <h1>Comprobación de Gastos</h1>
 
-      <div id="formSignIn" class="auth-form">
-        <input id="siEmail" type="email" placeholder="Correo" />
-        <input id="siPassword" type="password" placeholder="Contraseña" />
-        <button id="btnSignIn" class="btn-blue">Entrar</button>
-      </div>
-
-      <div id="formSignUp" class="auth-form" style="display:none;">
-        <input id="suName" placeholder="Nombre completo" />
-        <input id="suEmail" type="email" placeholder="Correo" />
-        <input id="suPassword" type="password" placeholder="Contraseña" />
-        <button id="btnSignUp" class="btn-blue">Registrar</button>
-      </div>
-
-      <div style="margin-top:12px;text-align:center">
-        <a href="jdashboard.html" class="btn-outline">Probar sin login (demo)</a>
-      </div>
+    <div class="tabs-auth">
+      <button id="tabSignIn" class="tab-auth active">Entrar</button>
+      <button id="tabSignUp" class="tab-auth">Registrar</button>
     </div>
-  </main>
 
-  <!-- libs -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <div id="formSignIn">
+      <input id="siEmail" type="email" placeholder="Correo">
+      <input id="siPassword" type="password" placeholder="Contraseña">
+      <button id="btnSignIn" class="btn-blue">Entrar</button>
+    </div>
 
-  <!-- app scripts -->
-  <script src="js/ocr.js"></script>
-  <script src="js/excel.js"></script>
-  <script src="main.js"></script>
+    <div id="formSignUp" style="display:none">
+      <input id="suName" placeholder="Nombre completo">
+      <input id="suEmail" type="email" placeholder="Correo">
+      <input id="suPassword" type="password" placeholder="Contraseña">
+      <button id="btnSignUp" class="btn-blue">Registrar</button>
+    </div>
+  </div>
+</main>
+
+<!-- ================= LIBRERÍAS OBLIGATORIAS ================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- ================= APP ================= -->
+<script src="main.js"></script>
+
 </body>
 </html>
+
+
