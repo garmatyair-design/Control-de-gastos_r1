@@ -711,3 +711,153 @@ async function procesarMultiPreview(cfg){
 
 /* --------------------- final: query open handler --------------------- */
 (function handleQueryOpen(){ const params = new URLSearchParams(location.search); const open = params.get("open"); if(open){ setTimeout(()=> openReport(open), 400); } })();
+/* ================= MULTI UPLOAD INTEGRADO ================= */
+
+let previewItems = [];
+
+/* util */
+function abrirPreview() {
+  document.getElementById("previewModal").style.display = "flex";
+}
+function cerrarPreview() {
+  previewItems = [];
+  document.querySelector("#previewTable tbody").innerHTML = "";
+  document.getElementById("previewModal").style.display = "none";
+}
+
+/* procesa archivos múltiples */
+async function procesarArchivosMultiples(files, categoria) {
+  if (!activeReport) return alert("Abre un reporte primero.");
+
+  for (const file of files) {
+    let monto = 0;
+    let propina = 0;
+    let fecha = new Date().toISOString().slice(0, 10);
+
+    /* XML */
+    if (file.name.toLowerCase().endsWith(".xml")) {
+      const txt = await file.text();
+      const xml = new DOMParser().parseFromString(txt, "application/xml");
+      const comp = xml.querySelector("Comprobante, cfdi\\:Comprobante");
+      monto = parseFloat(comp?.getAttribute("Total") || 0);
+      fecha = comp?.getAttribute("Fecha")?.slice(0, 10) || fecha;
+    }
+
+    /* Imagen OCR */
+    else if (file.type.startsWith("image/")) {
+      const res = await ocrExtractAmountFromImageFile(file);
+      monto = Number(res || 0);
+    }
+
+    /* PDF (manual por ahora) */
+    else {
+      monto = Number(prompt(`Monto para ${file.name}`) || 0);
+    }
+
+    if (categoria === "Alimentos") {
+      propina = 0;
+    }
+
+    const total = monto + propina;
+
+    previewItems.push({
+      file,
+      categoria,
+      concepto: file.name,
+      fecha,
+      monto,
+      propina,
+      total
+    });
+  }
+
+  renderPreview();
+  abrirPreview();
+}
+
+/* render preview table */
+function renderPreview() {
+  const tbody = document.querySelector("#previewTable tbody");
+  tbody.innerHTML = "";
+
+  previewItems.forEach((it, idx) => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${it.concepto}</td>
+      <td>${it.categoria}</td>
+      <td><input type="date" value="${it.fecha}" onchange="previewItems[${idx}].fecha=this.value"></td>
+      <td><input type="number" value="${it.monto}" onchange="previewItems[${idx}].monto=Number(this.value); previewItems[${idx}].total=previewItems[${idx}].monto+previewItems[${idx}].propina; renderPreview();"></td>
+      <td>
+        ${it.categoria === "Alimentos"
+          ? `<input type="number" value="${it.propina}" onchange="previewItems[${idx}].propina=Number(this.value); previewItems[${idx}].total=previewItems[${idx}].monto+previewItems[${idx}].propina; renderPreview();">`
+          : "-"
+        }
+      </td>
+      <td>${money(it.total)}</td>
+      <td><button onclick="previewItems.splice(${idx},1); renderPreview();">❌</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+/* guardar todo */
+async function guardarPreview() {
+  for (const it of previewItems) {
+    const path = `${activeReport.id}/${uid()}_${it.file.name}`;
+    const { data: up } = await supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(path, it.file);
+
+    await supabase.from("expenses").insert({
+      report_id: activeReport.id,
+      tipo: "ticket",
+      concepto: it.concepto,
+      monto_base: it.monto,
+      propina: it.propina,
+      iva: 0,
+      total: it.total,
+      fecha: it.fecha,
+      categoria: it.categoria,
+      storage_path: up?.path || null
+    });
+  }
+
+  cerrarPreview();
+  await openReport(activeReport.id);
+  renderReportesList();
+  renderDashboard();
+  alert("Archivos guardados correctamente.");
+}
+
+/* ================= EVENTOS ================= */
+document.getElementById("btnProcesarAlimentos")?.addEventListener("click", () =>
+  procesarArchivosMultiples(
+    document.getElementById("inputAlimentosMulti").files,
+    "Alimentos"
+  )
+);
+document.getElementById("btnProcesarTransporte")?.addEventListener("click", () =>
+  procesarArchivosMultiples(
+    document.getElementById("inputTransporteMulti").files,
+    "Transporte"
+  )
+);
+document.getElementById("btnProcesarHospedaje")?.addEventListener("click", () =>
+  procesarArchivosMultiples(
+    document.getElementById("inputHospedajeMulti").files,
+    "Hospedaje"
+  )
+);
+document.getElementById("btnProcesarCasetas")?.addEventListener("click", () =>
+  procesarArchivosMultiples(
+    document.getElementById("inputCasetasMulti").files,
+    "Casetas"
+  )
+);
+document.getElementById("btnProcesarVarios")?.addEventListener("click", () =>
+  procesarArchivosMultiples(
+    document.getElementById("inputVariosMulti").files,
+    "Varios"
+  )
+);
