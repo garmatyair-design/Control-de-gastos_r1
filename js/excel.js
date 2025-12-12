@@ -1,66 +1,34 @@
 // js/excel.js
-
-// Usa SheetJS desde CDN:
-// <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+// Requiere SheetJS (XLSX) cargado en HTML.
 
 function exportarReporteAExcel(nombreArchivo, datos, totales) {
     const filas = [];
-
-    // Encabezados
-    filas.push([
-        "Categoría",
-        "Descripción",
-        "Fecha",
-        "Monto",
-        "Propina",
-        "Total Final"
-    ]);
-
-    // Agregar datos
-    datos.forEach(item => {
-        filas.push([
-            item.categoria,
-            item.descripcion || "",
-            item.fecha || "",
-            item.monto || 0,
-            item.propina || 0,
-            (item.monto + (item.propina || 0))
-        ]);
+    filas.push(["Fecha","Concepto","Categoría","Monto base","Propina","Total","Tipo","Archivo"]);
+    (datos||[]).forEach(item => {
+        filas.push([ item.fecha || "", item.descripcion || item.concepto || "", item.categoria || "", item.monto || 0, item.propina || 0, (item.total || item.monto || 0), item.tipo || "", item.storage_path || "" ]);
     });
-
-    // Totales
     filas.push([]);
-    filas.push(["TOTAL COMPROBADO", totales.totalComprobado]);
-    filas.push(["MONTO ASIGNADO", totales.montoAsignado]);
-    filas.push(["REMANENTE", totales.remanente]);
-    filas.push(["REEMBOLSO", totales.reembolso]);
-
-    const hoja = XLSX.utils.aoa_to_sheet(filas);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "Reporte");
-
-    XLSX.writeFile(libro, `${nombreArchivo}.xlsx`);
+    filas.push(["Reporte", totales.reporte || ""]);
+    filas.push(["Monto asignado", totales.montoAsignado || 0]);
+    filas.push(["Total gastado", totales.totalComprobado || 0]);
+    filas.push(["Resultado", totales.resultado || 0]);
+    const ws = XLSX.utils.aoa_to_sheet(filas);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+    XLSX.writeFile(wb, `${nombreArchivo}.xlsx`);
 }
 
 function exportarDashboardExcel(nombreArchivo, resumen, categorias) {
     const filas = [];
-
     filas.push(["Dashboard de Gastos"]);
     filas.push([]);
-    
-    filas.push(["Total Mensual", resumen.totalMensual]);
-    filas.push(["Categoría Más Alta", resumen.categoriaMayor]);
-    filas.push(["Reportes del Mes", resumen.reportesMes]);
+    filas.push(["Total Mensual", resumen.totalMensual || 0]);
+    filas.push(["Categoría Más Alta", resumen.categoriaMayor || ""]);
     filas.push([]);
-
-    filas.push(["Categoría", "Total"]);
-    categorias.forEach(c => {
-        filas.push([c.nombre, c.total]);
-    });
-
-    const hoja = XLSX.utils.aoa_to_sheet(filas);
-    const libro = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(libro, hoja, "Dashboard");
-
-    XLSX.writeFile(libro, `${nombreArchivo}.xlsx`);
+    filas.push(["Categoría","Total"]);
+    (categorias || []).forEach(c => filas.push([c.nombre, c.total]));
+    const ws = XLSX.utils.aoa_to_sheet(filas);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Dashboard");
+    XLSX.writeFile(wb, `${nombreArchivo}.xlsx`);
 }
