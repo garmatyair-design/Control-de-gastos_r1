@@ -1,21 +1,13 @@
-/* main.js - Integración Supabase + OCR + lógica cliente
-   Reemplaza nada: ya contiene tu SUPABASE_URL y SUPABASE_ANON_KEY (ANON).
-   IMPORTANTE: nunca uses service_role key en frontend.
-*/
+/* main.js - Integrado: Auth, Reports, Expenses, Multi-upload, Preview, OCR, PDF, Excel export */
 
-/* CONFIG SUPABASE */
+/* --------------------- CONFIG SUPABASE --------------------- */
 const SUPABASE_URL = "https://imhoqcsefymrnpqrhvis.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A"
-   ;
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// AÑADIR ESTA LÍNEA OBLIGATORIA
 const STORAGE_BUCKET = "comprobantes";
 
 console.log("Supabase cargado correctamente:", supabase);
-
-
 
 /* --------------------- utilidades --------------------- */
 function uid(prefix="") { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
@@ -64,7 +56,7 @@ supabase.auth.onAuthStateChange((event, session) => {
 
 /* --------------------- DOM ready wiring --------------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  // Login page
+  // login page
   if(byId("btnSignIn")){
     byId("tabSignIn").onclick = ()=> { byId("formSignIn").style.display="block"; byId("formSignUp").style.display="none"; byId("tabSignIn").classList.add("active"); byId("tabSignUp").classList.remove("active"); }
     byId("tabSignUp").onclick = ()=> { byId("formSignIn").style.display="none"; byId("formSignUp").style.display="block"; byId("tabSignUp").classList.add("active"); byId("tabSignIn").classList.remove("active"); }
@@ -83,18 +75,18 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // common signout buttons
+  // common signout
   if(byId("btnSignOut")) byId("btnSignOut").addEventListener("click", signOut);
   if(byId("btnSignOut2")) byId("btnSignOut2").addEventListener("click", signOut);
   if(byId("btnSignOut3")) byId("btnSignOut3").addEventListener("click", signOut);
 
-  // dashboard page
+  // dashboard
   if(location.pathname.endsWith("jdashboard.html")){
     byId("btnExportDashboard")?.addEventListener("click", exportDashboardExcel);
     loadMyReports().then(()=> renderDashboard());
   }
 
-  // reporte page
+  // reporte page wiring
   if(location.pathname.endsWith("reporte.html")){
     byId("btnCrearReporte")?.addEventListener("click", crearReporteHandler);
     byId("btnLoadMyReports")?.addEventListener("click", loadMyReports);
@@ -111,13 +103,15 @@ document.addEventListener("DOMContentLoaded", () => {
     byId("btnCerrarReporte")?.addEventListener("click", cerrarReporteHandler);
     byId("btnCancelEdit")?.addEventListener("click", ()=> byId("modalEdit").style.display="none");
     byId("btnSaveEdit")?.addEventListener("click", saveEditHandler);
+
+    // multi-upload preview buttons are wired in the preview module included below
     const params = new URLSearchParams(location.search);
     const open = params.get("open");
     if(open) setTimeout(()=> openReport(open), 400);
     loadMyReports();
   }
 
-  // historial page
+  // historial
   if(location.pathname.endsWith("shistorial.html")){
     byId("btnFiltrar")?.addEventListener("click", aplicarFiltro);
     loadMyReports().then(()=> renderHistorial());
@@ -207,8 +201,9 @@ function renderReportDetails(r){
     cats.forEach(cat=>{
       const items = (r.gastos || []).filter(g=>g.categoria===cat);
       const total = items.reduce((s,g)=> s + Number(g.total || 0), 0);
+      const propinaTotal = items.reduce((s,g)=> s + Number(g.propina || 0), 0);
       const div = document.createElement("div"); div.className="cat-card";
-      div.innerHTML = `<h4>${cat}</h4><div class="cat-total">${money(total)}</div><div style="margin-top:8px;font-size:13px;color:rgba(0,0,0,0.6)">${items.length} comprobantes</div>`;
+      div.innerHTML = `<h4>${cat}</h4><div class="cat-total">${money(total)}</div><div style="margin-top:8px;font-size:13px;color:rgba(0,0,0,0.6)">${items.length} comprobantes</div><div style="font-size:13px;color:rgba(0,0,0,0.6);margin-top:6px">Propinas: ${money(propinaTotal)}</div>`;
       containerCats.appendChild(div);
     });
   }
@@ -249,6 +244,51 @@ async function processFactura(){
     await openReport(activeReport.id); renderReportesList(); renderDashboard(); byId("inputFactura").value=""; alert("Factura guardada.");
     return;
   }
+
+  // attempt OCR for PDFs or ask for manual for other types
+  if(f.type === "application/pdf" || f.name.toLowerCase().endsWith(".pdf")){
+    // render first page to canvas using pdf.js if loaded
+    try {
+      const canvas = await (async function renderPdfToCanvas(file){
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const page = await pdf.getPage(1);
+          const viewport = page.getViewport({ scale: 1.5 });
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(viewport.width);
+          canvas.height = Math.round(viewport.height);
+          const ctx = canvas.getContext("2d");
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          return canvas;
+        } catch(e){
+          console.error("PDF render", e);
+          return null;
+        }
+      })(f);
+
+      if(canvas){
+        const res = await procesarImagenOCR(canvas, (m) => { if(byId("ocrStatus")) byId("ocrStatus").innerText = m.status + " " + (m.progress? Math.round(m.progress*100)+"%":""); });
+        if(byId("ocrStatus")) byId("ocrStatus").innerText = "";
+        const inferred = res?.monto;
+        if(inferred && confirm(`OCR detectó ${money(inferred)}. ¿Usarlo?`)) {
+          const path = `${activeReport.id}/${uid()}_${f.name}`;
+          const { data:up } = await supabase.storage.from(STORAGE_BUCKET).upload(path, f);
+          const storagePath = up?.path || null;
+          const payload = { report_id: activeReport.id, tipo: "factura", concepto: f.name, monto_base: inferred, iva:0, propina:0, total: inferred, fecha: new Date().toISOString().slice(0,10), categoria:"Varios", storage_path: storagePath };
+          const { data, error } = await supabase.from("expenses").insert(payload).select().single();
+          if(error) return alert("Error: "+error.message);
+          await openReport(activeReport.id); renderReportesList(); renderDashboard(); byId("inputFactura").value=""; alert("Factura (PDF) guardada.");
+          return;
+        }
+      }
+
+    } catch(e){
+      console.error("PDF OCR", e);
+    }
+  }
+
+  // fallback: manual prompt + upload
   const path = `${activeReport.id}/${uid()}_${f.name}`;
   const { data:up } = await supabase.storage.from(STORAGE_BUCKET).upload(path, f);
   const storagePath = up?.path || null;
@@ -262,7 +302,7 @@ async function processFactura(){
 /* --------------------- OCR helpers (uses js/ocr.js) --------------------- */
 async function ocrExtractAmountFromImageFile(file){
   try{
-    if(!file.type.startsWith("image/")) return null;
+    if(!file) return null;
     const res = await procesarImagenOCR(file, (m) => { if(byId("ocrStatus")) byId("ocrStatus").innerText = m.status + " " + (m.progress? Math.round(m.progress*100)+"%":""); });
     if(byId("ocrStatus")) byId("ocrStatus").innerText = "";
     return res?.monto || null;
@@ -287,8 +327,33 @@ async function agregarTicketHandler(){
         } else {
           alert("OCR no encontró monto claro. Ingresa manualmente.");
         }
+      } else if(f.type === "application/pdf"){
+        // try PDF first page OCR
+        const canvas = await (async function renderPdfToCanvas(file){
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            const page = await pdf.getPage(1);
+            const viewport = page.getViewport({ scale: 1.5 });
+            const canvas = document.createElement("canvas");
+            canvas.width = Math.round(viewport.width);
+            canvas.height = Math.round(viewport.height);
+            const ctx = canvas.getContext("2d");
+            await page.render({ canvasContext: ctx, viewport }).promise;
+            return canvas;
+          } catch(e){
+            console.error("PDF render", e);
+            return null;
+          }
+        })(f);
+        if(canvas){
+          const res = await procesarImagenOCR(canvas, (m) => { if(byId("ocrStatus")) byId("ocrStatus").innerText = m.status + " " + (m.progress? Math.round(m.progress*100)+"%":""); });
+          if(byId("ocrStatus")) byId("ocrStatus").innerText = "";
+          const inferred = res?.monto;
+          if(inferred && confirm(`OCR (PDF) detectó ${money(inferred)}. ¿Usarlo?`)) monto = inferred;
+        }
       } else {
-        alert("Archivo no es imagen. Para PDFs, ingresa monto manualmente.");
+        alert("Archivo no es imagen o PDF. Ingresa monto manualmente.");
       }
     } else { if(!monto){ if(!confirm("Agregar ticket con monto 0?")) return; } }
   }
@@ -416,5 +481,233 @@ function renderHistorial(){
 }
 function aplicarFiltro(){ alert("Filtro aplicado (por implementar)"); }
 
-/* --------------------- Query open handler --------------------- */
+/* --------------------- PREVIEW + MULTI-UPLOAD + PDF OCR (reusable) ---------------- */
+
+let previewItems = []; // { file, categoria, fecha, monto, propina, total }
+
+function cerrarPreview(){
+  previewItems = [];
+  const modal = byId("previewModal");
+  if(modal) modal.style.display = "none";
+}
+
+async function guardarPreview(){
+  if(!activeReport) return alert("No hay reporte abierto.");
+  if(previewItems.length === 0) return alert("No hay items para guardar.");
+
+  for(const item of previewItems){
+    try {
+      const path = `${activeReport.id}/${uid()}_${item.file.name}`;
+      const { data: up, error: upErr } = await supabase.storage.from(STORAGE_BUCKET).upload(path, item.file);
+      if(upErr){
+        console.error("Upload error", upErr);
+      }
+      const storagePath = up?.path || null;
+
+      const payload = {
+        report_id: activeReport.id,
+        tipo: "ticket",
+        concepto: item.file.name,
+        monto_base: Number(item.monto) || 0,
+        propina: Number(item.propina) || 0,
+        iva: 0,
+        total: Number(item.total) || (Number(item.monto||0) + Number(item.propina||0)),
+        fecha: item.fecha || new Date().toISOString().slice(0,10),
+        categoria: item.categoria || "Varios",
+        storage_path: storagePath
+      };
+
+      const { error } = await supabase.from("expenses").insert(payload);
+      if(error) console.error("DB insert error", error);
+    } catch(err){
+      console.error("guardarPreview item error", err);
+    }
+  }
+
+  cerrarPreview();
+  await openReport(activeReport.id);
+  renderReportesList();
+  renderDashboard();
+  alert("Archivos guardados correctamente.");
+}
+
+/* PDF render helper (pdf.js) */
+async function renderPdfFirstPageToCanvas(file) {
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const page = await pdf.getPage(1);
+    const viewport = page.getViewport({ scale: 1.5 });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext("2d");
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    return canvas;
+  } catch (e) {
+    console.error("PDF render error", e);
+    return null;
+  }
+}
+
+function mostrarPreview(){
+  const tbody = byId("previewTable").querySelector("tbody");
+  tbody.innerHTML = "";
+
+  previewItems.forEach((item, i) => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis">
+        ${item.file.name}
+      </td>
+
+      <td>
+        <select onchange="previewItems[${i}].categoria = this.value">
+          <option ${item.categoria==="Alimentos"?"selected":""}>Alimentos</option>
+          <option ${item.categoria==="Transporte"?"selected":""}>Transporte</option>
+          <option ${item.categoria==="Hospedaje"?"selected":""}>Hospedaje</option>
+          <option ${item.categoria==="Casetas"?"selected":""}>Casetas</option>
+          <option ${item.categoria==="Varios"?"selected":""}>Varios</option>
+        </select>
+      </td>
+
+      <td>
+        <input type="date" value="${item.fecha}"
+          onchange="previewItems[${i}].fecha = this.value">
+      </td>
+
+      <td>
+        <input type="number" step="0.01" value="${item.monto || 0}"
+          onchange="previewItems[${i}].monto = Number(this.value); updateTotal(${i})">
+      </td>
+
+      <td>
+        <input type="number" step="0.01" value="${item.propina || 0}" ${item.categoria!=="Alimentos" ? "disabled" : ""}
+          onchange="previewItems[${i}].propina = Number(this.value); updateTotal(${i})">
+      </td>
+
+      <td>
+        <input id="total-${i}" type="number" step="0.01" value="${(Number(item.monto||0) + Number(item.propina||0)).toFixed(2)}" disabled>
+      </td>
+
+      <td>
+        <button class="btn-outline" onclick="previewRemoveRow(${i})">Eliminar</button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+  });
+
+  byId("previewModal").style.display = "flex";
+}
+
+function updateTotal(i){
+  previewItems[i].total = Number(previewItems[i].monto || 0) + Number(previewItems[i].propina || 0);
+  const el = byId(`total-${i}`);
+  if(el) el.value = previewItems[i].total.toFixed(2);
+}
+
+function previewRemoveRow(index){
+  if(!confirm("Eliminar este item de la previsualización?")) return;
+  previewItems.splice(index, 1);
+  mostrarPreview();
+}
+
+/* Procesamiento multi + preview mapping */
+document.addEventListener("DOMContentLoaded", () => {
+  const mapping = [
+    { btn: "btnProcesarAlimentos",   input: "inputAlimentosMulti",   categoria: "Alimentos" },
+    { btn: "btnProcesarTransporte",  input: "inputTransporteMulti",  categoria: "Transporte" },
+    { btn: "btnProcesarHospedaje",   input: "inputHospedajeMulti",   categoria: "Hospedaje" },
+    { btn: "btnProcesarCasetas",     input: "inputCasetasMulti",     categoria: "Casetas" },
+    { btn: "btnProcesarVarios",      input: "inputVariosMulti",      categoria: "Varios" }
+  ];
+
+  mapping.forEach(cfg => {
+    if(byId(cfg.btn)){
+      byId(cfg.btn).addEventListener("click", () => procesarMultiPreview(cfg));
+    }
+  });
+});
+
+async function procesarMultiPreview(cfg){
+  const files = byId(cfg.input).files;
+  if(!files.length) return alert("Selecciona archivos.");
+  if(!activeReport) return alert("Abre un reporte.");
+
+  previewItems = [];
+
+  for(const file of files){
+    try {
+      let monto = 0;
+      let propina = 0;
+      let fecha = new Date().toISOString().slice(0,10);
+
+      /* XML */
+      if(file.name.toLowerCase().endsWith(".xml")){
+        try {
+          const xmlText = await file.text();
+          const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+          const comp = xml.querySelector("Comprobante") || xml.querySelector("cfdi\\:Comprobante");
+          const totalStr = comp?.getAttribute("Total") || comp?.getAttribute("total");
+          monto = totalStr ? parseFloat(totalStr) : 0;
+          fecha = comp?.getAttribute("Fecha") || fecha;
+        } catch(e){ console.error("XML parse", e); }
+      }
+
+      /* PDF */
+      if(!monto && (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf"))){
+        const canvas = await renderPdfFirstPageToCanvas(file);
+        if(canvas){
+          const res = await procesarImagenOCR(canvas, (m) => {
+            if(byId("ocrStatus")) byId("ocrStatus").innerText = m.status + " " + (m.progress? Math.round(m.progress*100)+"%":"");
+          });
+          if(byId("ocrStatus")) byId("ocrStatus").innerText = "";
+          const inferred = res?.monto;
+          if(inferred){
+            if(confirm(`OCR (PDF) detectó ${money(inferred)} en ${file.name}. ¿Usarlo?`)) monto = inferred;
+          }
+        }
+      }
+
+      /* IMAGEN */
+      if(!monto && file.type.startsWith("image/")){
+        const inferred = await ocrExtractAmountFromImageFile(file);
+        if(inferred){
+          if(confirm(`OCR detectó ${money(inferred)} en ${file.name}. ¿Usarlo?`)){
+            monto = inferred;
+          }
+        }
+      }
+
+      /* MANUAL */
+      if(!monto){
+        monto = Number(prompt(`Ingresa monto para ${file.name}:`) || 0);
+      }
+
+      /* PROPINA SOLO ALIMENTOS */
+      if(cfg.categoria === "Alimentos"){
+        propina = Number(prompt(`Propina para ${file.name} (0 si no aplica):`) || 0);
+      }
+
+      const totalFinal = Number((Number(monto) + Number(propina)).toFixed(2));
+
+      previewItems.push({
+        file,
+        categoria: cfg.categoria,
+        fecha,
+        monto,
+        propina,
+        total: totalFinal
+      });
+    } catch(e){
+      console.error("procesarMultiPreview error", e);
+    }
+  }
+
+  mostrarPreview();
+}
+
+/* --------------------- final: query open handler --------------------- */
 (function handleQueryOpen(){ const params = new URLSearchParams(location.search); const open = params.get("open"); if(open){ setTimeout(()=> openReport(open), 400); } })();
