@@ -63,8 +63,8 @@
       </div>
 
       <div class="tabs">
-        <button class="tab active" data-tab="factura">Factura (XML/PDF)</button>
-        <button class="tab" data-tab="ticket">Ticket (imagen/PDF)</button>
+        <button class="tab active" data-tab="factura">Factura / Upload</button>
+        <button class="tab" data-tab="ticket">Ticket</button>
         <button class="tab" data-tab="manual">Manual</button>
       </div>
 
@@ -73,7 +73,7 @@
           <input id="inputFactura" type="file" accept=".xml,.pdf">
           <button id="btnProcesarFactura" class="btn-blue">Procesar y guardar</button>
         </div>
-        <p class="help">Si subes XML CFDI el sistema intentará extraer el total.</p>
+        <p class="help">Sube XML CFDI (se extrae total) o PDF (se intentará OCR en la 1ª página).</p>
       </div>
 
       <div id="ticket" class="tab-content">
@@ -108,40 +108,97 @@
         <h3>Gastos</h3>
         <div id="gastosList" class="list"></div>
       </div>
+
+      <!-- MULTI-UPLOAD BLOCKS -->
+      <div class="card" style="margin-top:12px;">
+        <h3>Carga múltiple por categoría</h3>
+
+        <!-- Alimentos -->
+        <div class="upload-block">
+          <label>Alimentos</label>
+          <input type="file" id="inputAlimentosMulti" multiple>
+          <button class="btn-primary" id="btnProcesarAlimentos">Previsualizar Alimentos</button>
+          <div id="alimentosListaPreview" class="lista-preview"></div>
+        </div>
+
+        <!-- Transporte -->
+        <div class="upload-block">
+          <label>Transporte</label>
+          <input type="file" id="inputTransporteMulti" multiple>
+          <button class="btn-primary" id="btnProcesarTransporte">Previsualizar Transporte</button>
+          <div id="transporteListaPreview" class="lista-preview"></div>
+        </div>
+
+        <!-- Hospedaje -->
+        <div class="upload-block">
+          <label>Hospedaje</label>
+          <input type="file" id="inputHospedajeMulti" multiple>
+          <button class="btn-primary" id="btnProcesarHospedaje">Previsualizar Hospedaje</button>
+          <div id="hospedajeListaPreview" class="lista-preview"></div>
+        </div>
+
+        <!-- Casetas -->
+        <div class="upload-block">
+          <label>Casetas</label>
+          <input type="file" id="inputCasetasMulti" multiple>
+          <button class="btn-primary" id="btnProcesarCasetas">Previsualizar Casetas</button>
+          <div id="casetasListaPreview" class="lista-preview"></div>
+        </div>
+
+        <!-- Varios -->
+        <div class="upload-block">
+          <label>Gastos Varios</label>
+          <input type="file" id="inputVariosMulti" multiple>
+          <button class="btn-primary" id="btnProcesarVarios">Previsualizar Varios</button>
+          <div id="variosListaPreview" class="lista-preview"></div>
+        </div>
+
+      </div>
+
     </section>
   </main>
 
-  <!-- modal editar -->
-  <div id="modalEdit" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h3>Editar gasto</h3>
-      <div class="form-grid">
-        <input id="editConcepto" placeholder="Concepto">
-        <input id="editMonto" type="number" placeholder="Monto">
-        <input id="editFecha" type="date">
-        <select id="editCategoria"><option>Alimentos</option><option>Hospedaje</option><option>Transporte</option><option>Casetas</option><option>Varios</option></select>
-        <input id="editPropina" type="number" placeholder="Propina (solo Alimentos)">
-      </div>
-      <div class="modal-actions">
-        <button id="btnCancelEdit" class="btn-outline">Cancelar</button>
-        <button id="btnSaveEdit" class="btn-blue">Guardar</button>
+  <!-- PREVISUALIZACIÓN DE ARCHIVOS (MODAL) -->
+  <div id="previewModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width:1000px;">
+      <h3>Previsualización de archivos</h3>
+
+      <table class="preview-table" id="previewTable">
+        <thead>
+          <tr>
+            <th>Archivo</th>
+            <th>Categoría</th>
+            <th>Fecha</th>
+            <th>Monto</th>
+            <th>Propina</th>
+            <th>Total</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+
+      <div style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
+        <button class="btn-outline" onclick="cerrarPreview()">Cancelar</button>
+        <button class="btn-primary" onclick="guardarPreview()">Guardar todo</button>
       </div>
     </div>
   </div>
 
-  <!-- libs -->
- <!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <!-- libs + pdf.js (para OCR en PDFs) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<!-- OCR -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+  <!-- PDF.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
 
-<!-- Excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<!-- Tu código -->
-<script src="js/ocr.js"></script>
-<script src="js/excel.js"></script>
-<script src="main.js"></script>
+  <!-- app scripts -->
+  <script src="js/ocr.js"></script>
+  <script src="js/excel.js"></script>
+  <script src="main.js"></script>
 </body>
 </html>
+
