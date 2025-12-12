@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Reporte de Gastos</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -10,57 +10,113 @@
 
 <header class="header">
   <h1>Reporte de Gastos</h1>
-  <button id="btnSignOut2" class="btn-outline">Salir</button>
+  <nav>
+    <button id="btnSignOut2" class="btn-outline">Salir</button>
+  </nav>
 </header>
 
 <main class="container">
 
-<section class="card">
-  <h2>Cargar documentos</h2>
+  <!-- CREAR REPORTE -->
+  <section class="card">
+    <h2>Crear reporte</h2>
+    <div class="form-grid">
+      <input id="reporteNombre" placeholder="Nombre del reporte">
+      <input id="montoComprobar" type="number" placeholder="Monto a comprobar">
+      <input id="fechaReporte" type="date">
+      <input id="ejecutivoReporte" placeholder="Ejecutivo">
+    </div>
+    <button id="btnCrearReporte" class="btn-blue">Crear Reporte</button>
+  </section>
 
-  <!-- 🔥 MISMA SECCIÓN, NO APARTE -->
-  <div class="upload-row">
-    <input id="inputDocs" type="file" multiple accept=".xml,.pdf,image/*">
+  <!-- TOTALES -->
+  <section class="card">
+    <div class="totales-grid">
+      <div class="total-card">
+        <small>Monto asignado</small>
+        <strong id="lblMontoAsignado">$0.00</strong>
+      </div>
+      <div class="total-card">
+        <small>Total gastado</small>
+        <strong id="lblTotalGastado">$0.00</strong>
+      </div>
+      <div class="total-card">
+        <small>Resultado</small>
+        <strong id="lblResultado">$0.00</strong>
+      </div>
+    </div>
+  </section>
 
-    <select id="docCategoria">
-      <option>Alimentos</option>
-      <option>Hospedaje</option>
-      <option>Transporte</option>
-      <option>Casetas</option>
-      <option>Varios</option>
-    </select>
+  <!-- TABS -->
+  <section class="card">
+    <div class="tabs">
+      <button class="tab active" data-tab="factura">Factura / Upload</button>
+      <button class="tab" data-tab="ticket">Ticket</button>
+      <button class="tab" data-tab="manual">Manual</button>
+    </div>
 
-    <button id="btnProcesarDocs" class="btn-blue">
-      Procesar archivos
-    </button>
-  </div>
+    <!-- FACTURA / UPLOAD -->
+    <div id="factura" class="tab-content active">
 
-  <p class="help">
-    Puedes seleccionar varios archivos a la vez.  
-    En <strong>Alimentos</strong> podrás capturar propina por archivo.
-  </p>
+      <h3>Cargar documentos</h3>
 
-  <div id="ocrStatus" class="muted"></div>
-</section>
+      <div class="upload-row">
+        <input id="inputFactura" type="file" multiple accept=".xml,.pdf,image/*">
 
-<section class="card">
-  <h2>Gastos cargados</h2>
-  <div id="gastosList" class="list"></div>
-</section>
+        <select id="categoriaFactura">
+          <option>Alimentos</option>
+          <option>Hospedaje</option>
+          <option>Transporte</option>
+          <option>Casetas</option>
+          <option>Varios</option>
+        </select>
+
+        <button id="btnProcesarFactura" class="btn-blue">
+          Procesar archivos
+        </button>
+      </div>
+
+      <p class="help">
+        Puedes seleccionar varios archivos a la vez.
+        En <strong>Alimentos</strong> podrás capturar propina por archivo.
+      </p>
+
+      <div id="previewFactura"></div>
+    </div>
+
+    <!-- TICKET -->
+    <div id="ticket" class="tab-content">
+      <input id="inputTicket" type="file">
+      <input id="ticketMonto" placeholder="Monto">
+      <button id="btnAgregarTicket" class="btn-blue">Agregar</button>
+    </div>
+
+    <!-- MANUAL -->
+    <div id="manual" class="tab-content">
+      <input id="manualConcepto" placeholder="Concepto">
+      <input id="manualMonto" type="number" placeholder="Monto">
+      <button id="btnAgregarManual" class="btn-blue">Agregar gasto</button>
+    </div>
+
+  </section>
+
+  <!-- LISTA DE GASTOS -->
+  <section class="card">
+    <h3>Gastos cargados</h3>
+    <div id="gastosList"></div>
+  </section>
 
 </main>
 
-<!-- ================= LIBRERÍAS OBLIGATORIAS ================= -->
+<!-- LIBRERÍAS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-  <!-- app scripts -->
-  <script src="js/ocr.js"></script>
-  <script src="js/excel.js"></script>
-  <script src="main.js"></script>
+<!-- APP -->
+<script src="js/ocr.js"></script>
+<script src="js/excel.js"></script>
+<script src="main.js"></script>
 
 </body>
 </html>
