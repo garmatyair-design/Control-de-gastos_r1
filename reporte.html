@@ -2,94 +2,69 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Nuevo Reporte — Gastos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Reporte de Gastos</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <header class="header">
-  <h1>Nuevo Reporte</h1>
-  <nav>
-    <a href="jdashboard.html" class="btn-outline">Dashboard</a>
-    <button id="btnSignOut2" class="btn-outline">Salir</button>
-  </nav>
+  <h1>Reporte de Gastos</h1>
+  <button id="btnSignOut2" class="btn-outline">Salir</button>
 </header>
 
 <main class="container">
 
-  <!-- CREAR REPORTE -->
-  <section class="card">
-    <h2>Crear reporte</h2>
-    <div class="form-grid">
-      <input id="reporteNombre" placeholder="Nombre del reporte">
-      <input id="montoComprobar" type="number" placeholder="Monto a comprobar">
-      <input id="fechaReporte" type="date">
-      <input id="ejecutivoReporte" placeholder="Ejecutivo">
-    </div>
-    <button id="btnCrearReporte" class="btn-blue">Crear reporte</button>
-  </section>
+<section class="card">
+  <h2>Cargar documentos</h2>
 
-  <!-- PANEL REPORTE -->
-  <section id="reportePanel" class="card" style="display:none">
+  <!-- 🔥 MISMA SECCIÓN, NO APARTE -->
+  <div class="upload-row">
+    <input id="inputDocs" type="file" multiple accept=".xml,.pdf,image/*">
 
-    <h2 id="reporteTitulo"></h2>
+    <select id="docCategoria">
+      <option>Alimentos</option>
+      <option>Hospedaje</option>
+      <option>Transporte</option>
+      <option>Casetas</option>
+      <option>Varios</option>
+    </select>
 
-    <!-- TOTALES -->
-    <div class="totales-grid">
-      <div><small>Asignado</small><strong id="lblMontoAsignado">$0</strong></div>
-      <div><small>Total gastos</small><strong id="lblTotalGastado">$0</strong></div>
-      <div><small>Diferencia</small><strong id="lblResultado">$0</strong></div>
-    </div>
+    <button id="btnProcesarDocs" class="btn-blue">
+      Procesar archivos
+    </button>
+  </div>
 
-    <!-- FACTURA / UPLOAD (UNIFICADO + MULTI) -->
-    <div class="card" style="margin-top:16px">
-      <h3>Cargar comprobantes</h3>
+  <p class="help">
+    Puedes seleccionar varios archivos a la vez.  
+    En <strong>Alimentos</strong> podrás capturar propina por archivo.
+  </p>
 
-      <div class="upload-row">
-        <input
-          id="inputFactura"
-          type="file"
-          accept=".xml,.pdf,image/*"
-          multiple
-        >
+  <div id="ocrStatus" class="muted"></div>
+</section>
 
-        <select id="categoriaFactura">
-          <option>Alimentos</option>
-          <option>Hospedaje</option>
-          <option>Transporte</option>
-          <option>Casetas</option>
-          <option>Varios</option>
-        </select>
+<section class="card">
+  <h2>Gastos cargados</h2>
+  <div id="gastosList" class="list"></div>
+</section>
 
-        <button id="btnProcesarFactura" class="btn-blue">
-          Procesar archivos
-        </button>
-      </div>
-
-      <p class="help">
-        Puedes seleccionar varios archivos. Cada archivo se guardará como un gasto independiente.
-      </p>
-    </div>
-
-    <!-- LISTA -->
-    <div class="card" style="margin-top:16px">
-      <h3>Gastos registrados</h3>
-      <div id="gastosList"></div>
-    </div>
-
-  </section>
 </main>
 
-<!-- LIBS -->
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<!-- ================= LIBRERÍAS OBLIGATORIAS ================= -->
 
-  <!-- app scripts -->
-  <script src="js/ocr.js"></script>
-  <script src="js/excel.js"></script>
-  <script src="main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- ================= APP ================= -->
+<script src="main.js"></script>
+
 </body>
 </html>
+
