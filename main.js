@@ -1,235 +1,137 @@
-/**********************************************************
- *  main.js – Comprobación de Gastos (VERSIÓN FINAL)
- *  - Supabase Auth + DB + Storage
- *  - XML automático
- *  - OCR imágenes
- *  - Carga múltiple integrada por categoría
- *  - Propina solo en Alimentos
- **********************************************************/
-
-/* ================= CONFIG ================= */
+/* ========= CONFIG ========= */
 const SUPABASE_URL = "https://imhoqcsefymrnpqrhvis.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A";
-const STORAGE_BUCKET = "comprobantes";
+const SUPABASE_ANON_KEY = "PEGA_AQUI_TU_ANON_KEY";
 
-const supabase = window.supabase.createClient(
+const supabase = supabaseJs.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
 
-/* ================= UTIL ================= */
+const STORAGE_BUCKET = "comprobantes";
+
+/* ========= HELPERS ========= */
 const $ = (id) => document.getElementById(id);
-const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-const money = (n) =>
-  Number(n || 0).toLocaleString("es-MX", {
-    style: "currency",
-    currency: "MXN",
-  });
+const money = (n) => Number(n || 0).toLocaleString("es-MX", {
+  style: "currency",
+  currency: "MXN"
+});
 
+/* ========= STATE ========= */
 let activeReport = null;
-let previewItems = [];
+let gastos = [];
 
-/* ================= AUTH ================= */
-supabase.auth.onAuthStateChange((_, session) => {
-  if (!session && !location.pathname.endsWith("index.html")) {
-    location.href = "index.html";
-  }
-});
-
-/* ================= DOM READY ================= */
-document.addEventListener("DOMContentLoaded", () => {
-  /* -------- LOGIN -------- */
-  if ($("btnSignIn")) {
-    $("btnSignIn").onclick = async () => {
-      const email = $("siEmail").value;
-      const password = $("siPassword").value;
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) return alert(error.message);
-      location.href = "jdashboard.html";
-    };
-
-    $("btnSignUp").onclick = async () => {
-      const email = $("suEmail").value;
-      const password = $("suPassword").value;
-      const name = $("suName").value;
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: name } },
-      });
-      if (error) return alert(error.message);
-      alert("Usuario creado");
-    };
-    return;
-  }
-
-  /* -------- LOGOUT -------- */
-  $("btnSignOut2")?.addEventListener("click", async () => {
-    await supabase.auth.signOut();
-    location.href = "index.html";
-  });
-
-  /* -------- REPORTE -------- */
-  if (location.pathname.endsWith("reporte.html")) {
-    $("btnCrearReporte").onclick = crearReporte;
-
-    // CARGA MÚLTIPLE (INTEGRADA)
-    bindMulti("Alimentos");
-    bindMulti("Transporte");
-    bindMulti("Hospedaje");
-    bindMulti("Casetas");
-    bindMulti("Varios");
-  }
-});
-
-/* ================= REPORTE ================= */
-async function crearReporte() {
-  const name = $("reporteNombre").value;
+/* ========= CREAR REPORTE ========= */
+$("btnCrearReporte").onclick = async () => {
+  const nombre = $("reporteNombre").value;
   const monto = Number($("montoComprobar").value);
-  if (!name || !monto) return alert("Datos incompletos");
+  const fecha = $("fechaReporte").value;
+  const ejecutivo = $("ejecutivoReporte").value;
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  if (!nombre || !monto) return alert("Datos incompletos");
 
   const { data, error } = await supabase
     .from("reports")
-    .insert({
-      owner: user.id,
-      name,
-      monto_asignado: monto,
-      fecha: $("fechaReporte").value,
-      ejecutivo: $("ejecutivoReporte").value,
-    })
+    .insert({ nombre, monto, fecha, ejecutivo })
     .select()
     .single();
 
   if (error) return alert(error.message);
+
   activeReport = data;
+
+  $("reporteTitulo").innerText = nombre;
+  $("lblMontoAsignado").innerText = money(monto);
   $("reportePanel").style.display = "block";
-  $("reporteTitulo").innerText = data.name;
-}
+};
 
-/* ================= MULTI UPLOAD ================= */
-function bindMulti(cat) {
-  $(`btnProcesar${cat}`)?.addEventListener("click", async () => {
-    const files = $(`input${cat}Multi`).files;
-    if (!files.length) return alert("Selecciona archivos");
-    if (!activeReport) return alert("Crea o abre un reporte");
+/* ========= PROCESAR MULTI FACTURAS ========= */
+$("btnProcesarFactura").onclick = async () => {
+  if (!activeReport) return alert("Crea un reporte primero");
 
-    previewItems = [];
+  const files = $("inputFactura").files;
+  if (!files.length) return alert("Selecciona archivos");
 
-    for (const file of files) {
-      let monto = 0;
-      let fecha = new Date().toISOString().slice(0, 10);
-      let propina = 0;
+  const categoria = $("categoriaFactura").value;
 
-      // XML
-      if (file.name.endsWith(".xml")) {
-        const txt = await file.text();
-        const xml = new DOMParser().parseFromString(txt, "application/xml");
-        const c = xml.querySelector("Comprobante, cfdi\\:Comprobante");
-        monto = Number(c?.getAttribute("Total") || 0);
-        fecha = c?.getAttribute("Fecha")?.slice(0, 10) || fecha;
-      }
-      // IMAGEN OCR
-      else if (file.type.startsWith("image/")) {
-        const res = await Tesseract.recognize(file, "eng");
-        const match = res.data.text.match(/(\d+\.\d{2})/);
-        monto = match ? Number(match[1]) : 0;
-      }
-      // OTROS
-      else {
-        monto = Number(prompt(`Monto para ${file.name}`) || 0);
-      }
+  for (const file of files) {
+    let monto = 0;
+    let propina = 0;
+    let fecha = new Date().toISOString().slice(0, 10);
 
-      previewItems.push({
-        file,
-        categoria: cat,
-        concepto: file.name,
-        fecha,
-        monto,
-        propina,
-        total: monto,
-      });
+    /* XML */
+    if (file.name.endsWith(".xml")) {
+      const text = await file.text();
+      const xml = new DOMParser().parseFromString(text, "application/xml");
+      const c = xml.querySelector("Comprobante, cfdi\\:Comprobante");
+      monto = Number(c?.getAttribute("Total") || 0);
+      fecha = c?.getAttribute("Fecha")?.slice(0, 10) || fecha;
     }
 
-    renderPreview();
-    $("previewModal").style.display = "flex";
-  });
-}
+    /* IMAGEN OCR */
+    else if (file.type.startsWith("image/")) {
+      const ocr = await Tesseract.recognize(file, "eng");
+      const match = ocr.data.text.match(/(\d+\.\d{2})/);
+      monto = match ? Number(match[1]) : 0;
+    }
 
-/* ================= PREVIEW ================= */
-function renderPreview() {
-  const tbody = document.querySelector("#previewTable tbody");
-  tbody.innerHTML = "";
+    /* OTROS */
+    else {
+      monto = Number(prompt(`Monto para ${file.name}`) || 0);
+    }
 
-  previewItems.forEach((g, i) => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td>${g.concepto}</td>
-      <td>${g.categoria}</td>
-      <td><input type="date" value="${g.fecha}"
-        onchange="previewItems[${i}].fecha=this.value"></td>
-      <td><input type="number" value="${g.monto}"
-        onchange="previewItems[${i}].monto=Number(this.value);updateTotal(${i})"></td>
-      <td>${
-        g.categoria === "Alimentos"
-          ? `<input type="number" value="${g.propina}"
-              onchange="previewItems[${i}].propina=Number(this.value);updateTotal(${i})">`
-          : "-"
-      }</td>
-      <td>${money(g.total)}</td>
-      <td><button onclick="removeItem(${i})">❌</button></td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
+    /* PROPINA SOLO ALIMENTOS */
+    if (categoria === "Alimentos") {
+      propina = Number(prompt(`Propina para ${file.name}`) || 0);
+    }
 
-function updateTotal(i) {
-  const g = previewItems[i];
-  g.total = g.monto + (g.categoria === "Alimentos" ? g.propina : 0);
-  renderPreview();
-}
+    const total = monto + propina;
 
-function removeItem(i) {
-  previewItems.splice(i, 1);
-  renderPreview();
-}
-
-/* ================= GUARDAR ================= */
-async function guardarPreview() {
-  for (const g of previewItems) {
-    const path = `${activeReport.id}/${uid()}_${g.file.name}`;
-    const { data: up } = await supabase.storage
+    /* SUBIR ARCHIVO */
+    const path = `${activeReport.id}/${Date.now()}_${file.name}`;
+    await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(path, g.file);
+      .upload(path, file);
 
-    await supabase.from("expenses").insert({
+    /* GUARDAR GASTO */
+    const { data } = await supabase.from("expenses").insert({
       report_id: activeReport.id,
-      tipo: "ticket",
-      concepto: g.concepto,
-      categoria: g.categoria,
-      fecha: g.fecha,
-      monto_base: g.monto,
-      propina: g.propina,
-      iva: 0,
-      total: g.total,
-      storage_path: up?.path || null,
-    });
+      concepto: file.name,
+      categoria,
+      fecha,
+      monto_base: monto,
+      propina,
+      total,
+      storage_path: path
+    }).select().single();
+
+    gastos.push(data);
   }
 
-  previewItems = [];
-  $("previewModal").style.display = "none";
-  alert("Gastos guardados correctamente");
-}
+  renderGastos();
+  $("inputFactura").value = "";
+  alert("Archivos procesados correctamente");
+};
 
-/* ================= GLOBAL ================= */
-window.guardarPreview = guardarPreview;
-window.cerrarPreview = () => ($("previewModal").style.display = "none");
-window.previewItems = previewItems;
-window.updateTotal = updateTotal;
-window.removeItem = removeItem;
+/* ========= RENDER ========= */
+function renderGastos() {
+  const cont = $("gastosList");
+  cont.innerHTML = "";
+
+  let total = 0;
+
+  gastos.forEach(g => {
+    total += g.total;
+    cont.innerHTML += `
+      <div class="list-item">
+        <strong>${g.concepto}</strong>
+        <span>${g.categoria}</span>
+        <span>${money(g.total)}</span>
+      </div>
+    `;
+  });
+
+  $("lblTotalGastado").innerText = money(total);
+  $("lblResultado").innerText = money(
+    $("montoComprobar").value - total
+  );
+}
