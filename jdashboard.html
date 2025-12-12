@@ -3,56 +3,65 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Dashboard — Gastos</title>
+  <title>Dashboard — Comprobación de Gastos</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="header">
-    <div>
-      <h1>Dashboard de Gastos</h1>
-      <p class="subtitle">Tendencia mensual y análisis por categoría</p>
+
+<header class="header">
+  <h1>Dashboard de Gastos</h1>
+  <nav>
+    <a href="reporte.html" class="btn-outline">Nuevo reporte</a>
+    <button id="btnSignOut" class="btn-outline">Salir</button>
+  </nav>
+</header>
+
+<main class="container">
+
+  <!-- KPIs -->
+  <section class="kpi-grid">
+    <div class="kpi-card">
+      <small>Total reportes</small>
+      <strong id="kpiReportes">0</strong>
     </div>
-    <nav>
-      <span id="userName" class="muted"></span>
-      <a class="btn-yellow" href="reporte.html">Nuevo reporte</a>
-      <a class="btn-outline" href="shistorial.html">Historial</a>
-      <button id="btnSignOut" class="btn-outline">Salir</button>
-    </nav>
-  </header>
+    <div class="kpi-card">
+      <small>Total gastado</small>
+      <strong id="kpiGastado">$0.00</strong>
+    </div>
+    <div class="kpi-card">
+      <small>Promedio por reporte</small>
+      <strong id="kpiPromedio">$0.00</strong>
+    </div>
+  </section>
 
-  <main class="container">
-    <section class="card">
-      <h2>Histórico de gastos por mes</h2>
-      <canvas id="graficaGastos" height="160"></canvas>
-    </section>
+  <!-- GRÁFICAS -->
+  <section class="card">
+    <h2>Gastos por categoría</h2>
+    <canvas id="chartCategorias" height="120"></canvas>
+  </section>
 
-    <section class="card">
-      <h2>Categoría con mayor gasto (último año)</h2>
-      <p id="categoriaMayor" class="big-text">—</p>
-    </section>
+  <section class="card">
+    <h2>Gastos por mes</h2>
+    <canvas id="chartMeses" height="120"></canvas>
+  </section>
 
-    <section class="card">
-      <h2>Exportaciones</h2>
-      <div class="actions">
-        <button id="btnExportDashboard" class="btn-blue">Exportar dashboard a Excel</button>
-      </div>
-    </section>
+  <!-- LISTADO -->
+  <section class="card">
+    <h2>Últimos gastos</h2>
+    <div id="ultimosGastos" class="list"></div>
+  </section>
 
-    <section class="card">
-      <h2>Reportes recientes</h2>
-      <div id="dashReportesList" class="list"></div>
-    </section>
-  </main>
+</main>
 
-  <!-- libs -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<!-- LIBRERÍAS -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- app scripts -->
-  <script src="js/ocr.js"></script>
-  <script src="js/excel.js"></script>
-  <script src="main.js"></script>
+<!-- APP -->
+<script src="dashboard.js"></script>
+
 </body>
 </html>
+
+
+  
