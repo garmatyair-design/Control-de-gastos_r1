@@ -1,21 +1,27 @@
 /* main.js - Integración Supabase + OCR + lógica cliente
-   Reemplaza SUPABASE_URL y SUPABASE_ANON_KEY por tus valores o configúralas en Vercel
+   Reemplaza nada: ya contiene tu SUPABASE_URL y SUPABASE_ANON_KEY (ANON).
+   IMPORTANTE: nunca uses service_role key en frontend.
 */
-const SUPABASE_URL = (typeof SUPABASE_URL !== "undefined") ? SUPABASE_URL : "https://TU-SUPABASE-URL.supabase.co";
-const SUPABASE_ANON_KEY = (typeof SUPABASE_ANON_KEY !== "undefined") ? SUPABASE_ANON_KEY : "TU-ANON-KEY";
+
+/* --------------------- CONFIG SUPABASE --------------------- */
+const SUPABASE_URL = "https://imhoqcsefymrnpqrhvis.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A";
+
 const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const STORAGE_BUCKET = "comprobantes";
 
+/* --------------------- utilidades --------------------- */
 function uid(prefix="") { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 function money(n){ return Number(n||0).toLocaleString("es-MX",{style:"currency",currency:"MXN"}); }
 function byId(id){ return document.getElementById(id); }
 
+/* state */
 let user = null;
 let reportesCache = [];
 let activeReport = null;
 let editingExpenseId = null;
 
-/* AUTH */
+/* --------------------- AUTH helpers --------------------- */
 async function signUp(email, password, name){
   const { data, error } = await supabase.auth.signUp({ email, password }, { data: { full_name: name } });
   if(error) throw error;
@@ -31,6 +37,8 @@ async function signOut(){
   await supabase.auth.signOut();
   location.href = "index.html";
 }
+
+/* --------------------- Auth listener --------------------- */
 supabase.auth.onAuthStateChange((event, session) => {
   if(session?.user){
     user = session.user;
@@ -42,11 +50,14 @@ supabase.auth.onAuthStateChange((event, session) => {
     loadMyReports().then(()=> {
       if(location.pathname.endsWith("dashboard.html")) renderDashboard();
     });
-  } else { user = null; }
+  } else {
+    user = null;
+  }
 });
 
-/* DOM ready */
+/* --------------------- DOM ready wiring --------------------- */
 document.addEventListener("DOMContentLoaded", () => {
+  // Login page
   if(byId("btnSignIn")){
     byId("tabSignIn").onclick = ()=> { byId("formSignIn").style.display="block"; byId("formSignUp").style.display="none"; byId("tabSignIn").classList.add("active"); byId("tabSignUp").classList.remove("active"); }
     byId("tabSignUp").onclick = ()=> { byId("formSignIn").style.display="none"; byId("formSignUp").style.display="block"; byId("tabSignUp").classList.add("active"); byId("tabSignIn").classList.remove("active"); }
@@ -54,26 +65,29 @@ document.addEventListener("DOMContentLoaded", () => {
     byId("btnSignIn").addEventListener("click", async ()=> {
       const email = byId("siEmail").value.trim(); const pass = byId("siPassword").value.trim();
       if(!email || !pass) return alert("Correo y contraseña requeridos.");
-      try{ await signIn(email, pass); location.href="dashboard.html"; } catch(e){ alert(e.message || JSON.stringify(e)); }
+      try{ await signIn(email, pass); location.href="jdashboard.html"; } catch(e){ alert(e.message || JSON.stringify(e)); }
     });
 
     byId("btnSignUp").addEventListener("click", async ()=> {
       const name = byId("suName").value.trim(); const email = byId("suEmail").value.trim(); const pass = byId("suPassword").value.trim();
       if(!name||!email||!pass) return alert("Completa todos los datos.");
-      try{ await signUp(email, pass, name); alert("Usuario creado. Revisa tu correo."); } catch(e){ alert(e.message || JSON.stringify(e)); }
+      try{ await signUp(email, pass, name); alert("Usuario creado. Revisa tu correo si aplica."); } catch(e){ alert(e.message || JSON.stringify(e)); }
     });
     return;
   }
 
+  // common signout buttons
   if(byId("btnSignOut")) byId("btnSignOut").addEventListener("click", signOut);
   if(byId("btnSignOut2")) byId("btnSignOut2").addEventListener("click", signOut);
   if(byId("btnSignOut3")) byId("btnSignOut3").addEventListener("click", signOut);
 
-  if(location.pathname.endsWith("dashboard.html")){
+  // dashboard page
+  if(location.pathname.endsWith("jdashboard.html")){
     byId("btnExportDashboard")?.addEventListener("click", exportDashboardExcel);
     loadMyReports().then(()=> renderDashboard());
   }
 
+  // reporte page
   if(location.pathname.endsWith("reporte.html")){
     byId("btnCrearReporte")?.addEventListener("click", crearReporteHandler);
     byId("btnLoadMyReports")?.addEventListener("click", loadMyReports);
@@ -96,13 +110,14 @@ document.addEventListener("DOMContentLoaded", () => {
     loadMyReports();
   }
 
-  if(location.pathname.endsWith("historial.html")){
+  // historial page
+  if(location.pathname.endsWith("shistorial.html")){
     byId("btnFiltrar")?.addEventListener("click", aplicarFiltro);
     loadMyReports().then(()=> renderHistorial());
   }
 });
 
-/* CRUD Reports */
+/* --------------------- Reports CRUD --------------------- */
 async function crearReporteHandler(){
   const nombre = byId("reporteNombre").value.trim();
   const monto = Number(byId("montoComprobar").value || 0);
@@ -119,6 +134,7 @@ async function crearReporteHandler(){
   openReport(data.id);
   byId("reporteNombre").value=""; byId("montoComprobar").value=""; byId("fechaReporte").value=""; byId("ejecutivoReporte").value="";
 }
+
 async function loadMyReports(){
   const session = await supabase.auth.getSession();
   if(!session.data?.session?.user) { reportesCache = []; renderReportesList(); return; }
@@ -129,6 +145,7 @@ async function loadMyReports(){
   renderReportesList();
   renderDashboard();
 }
+
 function renderReportesList(){
   const container = byId("reportesList") || byId("dashReportesList") || byId("histList");
   if(!container) return;
@@ -154,7 +171,7 @@ function renderReportesList(){
   });
 }
 
-/* Open report */
+/* --------------------- Open / show report --------------------- */
 async function openReport(id){
   const { data: r, error: errr } = await supabase.from("reports").select("*").eq("id", id).single();
   if(errr) return alert("No encontrado.");
@@ -204,7 +221,7 @@ function renderReportDetails(r){
   }
 }
 
-/* Process factura */
+/* --------------------- Factura (XML) processing --------------------- */
 async function processFactura(){
   const f = byId("inputFactura").files[0];
   if(!f) return alert("Selecciona archivo.");
@@ -235,31 +252,17 @@ async function processFactura(){
   await openReport(activeReport.id); renderReportesList(); renderDashboard(); byId("inputFactura").value=""; alert("Factura guardada.");
 }
 
-/* OCR helpers */
+/* --------------------- OCR helpers (uses js/ocr.js) --------------------- */
 async function ocrExtractAmountFromImageFile(file){
   try{
     if(!file.type.startsWith("image/")) return null;
-    const { createWorker } = Tesseract;
-    const worker = createWorker({ logger: m => { console.log("OCR:", m); if(byId("ocrStatus")) byId("ocrStatus").innerText = m.status + " " + (m.progress? Math.round(m.progress*100)+"%":""); } });
-    await worker.load(); await worker.loadLanguage('spa'); await worker.initialize('spa');
-    const result = await worker.recognize(file);
-    await worker.terminate();
-    const text = result?.data?.text || "";
-    const regex = /(\d{1,3}(?:[.,]\\d{3})*(?:[.,]\\d{2}))/g;
-    const matches = []; let m;
-    while((m = regex.exec(text)) !== null) matches.push(m[1]);
-    if(matches.length===0) return null;
-    const nums = matches.map(s=>{
-      let norm = s; const lastComma = s.lastIndexOf(','), lastDot = s.lastIndexOf('.');
-      if(lastComma > lastDot) norm = s.replace(/\\./g,'').replace(/,/g,'.'); else if(lastDot > lastComma) norm = s.replace(/,/g,''); else norm = s.replace(/,/g,'.');
-      const val = parseFloat(norm); return isNaN(val)?null:val;
-    }).filter(x=>x!=null);
-    if(nums.length===0) return null;
-    return Math.max(...nums);
-  }catch(e){ console.error("OCR error", e); return null; }
+    const res = await procesarImagenOCR(file, (m) => { if(byId("ocrStatus")) byId("ocrStatus").innerText = m.status + " " + (m.progress? Math.round(m.progress*100)+"%":""); });
+    if(byId("ocrStatus")) byId("ocrStatus").innerText = "";
+    return res?.monto || null;
+  }catch(e){ console.error("OCR error", e); if(byId("ocrStatus")) byId("ocrStatus").innerText=""; return null; }
 }
 
-/* add ticket with OCR */
+/* --------------------- Ticket handler --------------------- */
 async function agregarTicketHandler(){
   const f = byId("inputTicket").files[0];
   let monto = Number(byId("ticketMonto").value || 0);
@@ -291,7 +294,7 @@ async function agregarTicketHandler(){
   await openReport(activeReport.id); renderReportesList(); renderDashboard(); byId("inputTicket").value=""; byId("ticketMonto").value="";
 }
 
-/* manual add */
+/* --------------------- Manual add --------------------- */
 async function agregarManualHandler(){
   const concepto = byId("manualConcepto").value || "Gasto manual";
   const monto = Number(byId("manualMonto").value || 0);
@@ -306,7 +309,7 @@ async function agregarManualHandler(){
   await openReport(activeReport.id); renderReportesList(); renderDashboard();
 }
 
-/* edit modal */
+/* --------------------- Edit modal --------------------- */
 async function openEditModal(expenseId){
   const { data } = await supabase.from("expenses").select("*").eq("id", expenseId).single();
   if(!data) return alert("No encontrado.");
@@ -331,7 +334,7 @@ async function saveEditHandler(){
   byId("modalEdit").style.display = "none"; editingExpenseId = null; await openReport(activeReport.id); renderReportesList(); renderDashboard();
 }
 
-/* export reporte to excel */
+/* --------------------- Export reporte a Excel --------------------- */
 async function exportReporteExcel(){
   if(!activeReport) return alert("Abre un reporte.");
   const { data: expenses } = await supabase.from("expenses").select("*").eq("report_id", activeReport.id).order("created_at", { ascending:true });
@@ -343,11 +346,11 @@ async function exportReporteExcel(){
   const resumen = [["Reporte", activeReport.name], ["Fecha", activeReport.fecha], ["Ejecutivo", activeReport.ejecutivo || ""], ["Monto asignado", activeReport.monto_asignado], ["Total gastado", totalGastado], ["Resultado", resultado]];
   const ws2 = XLSX.utils.aoa_to_sheet(resumen);
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws2, "Resumen"); XLSX.utils.book_append_sheet(wb, ws, "Detalle");
-  const filename = `${activeReport.name.replace(/\\s+/g,"_")}_reporte.xlsx`;
+  const filename = `${activeReport.name.replace(/\s+/g,"_")}_reporte.xlsx`;
   XLSX.writeFile(wb, filename);
 }
 
-/* cerrar reporte */
+/* --------------------- Cerrar reporte --------------------- */
 async function cerrarReporteHandler(){
   if(!activeReport) return;
   await supabase.from("reports").update({ cerrado:true }).eq("id", activeReport.id);
@@ -355,7 +358,7 @@ async function cerrarReporteHandler(){
   await loadMyReports(); byId("reportePanel").style.display = "none";
 }
 
-/* dashboard render + export */
+/* --------------------- Dashboard render + export --------------------- */
 async function renderDashboard(){
   const session = await supabase.auth.getSession();
   if(!session.data?.session?.user) return;
@@ -377,7 +380,7 @@ async function renderDashboard(){
   const catEl = byId("categoriaMayor"); if(catEl){ let best=null, val=0; Object.keys(totalsByCategory).forEach(k=>{ if(totalsByCategory[k]>val){ best=k; val=totalsByCategory[k]; } }); catEl.innerText = best ? `${best} — ${money(val)}` : "Sin datos suficientes"; }
 }
 
-/* export dashboard */
+/* --------------------- Export dashboard --------------------- */
 async function exportDashboardExcel(){
   const session = await supabase.auth.getSession();
   if(!session.data?.session?.user) return alert("Inicia sesión.");
@@ -396,7 +399,7 @@ async function exportDashboardExcel(){
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws1, "Mensual"); XLSX.utils.book_append_sheet(wb, ws2, "PorCategoria"); XLSX.writeFile(wb, `dashboard_${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-/* historial */
+/* --------------------- Historial --------------------- */
 function renderHistorial(){
   const list = byId("histList");
   if(!list) return;
@@ -405,4 +408,6 @@ function renderHistorial(){
   list.querySelectorAll("button").forEach(b=>{ const id=b.dataset.id, a=b.dataset.action; b.addEventListener("click", ()=> { if(a==="open") location.href = `reporte.html?open=${id}`; if(a==="export"){ openReport(id).then(()=> setTimeout(()=> exportReporteExcel(),200)); } }); });
 }
 function aplicarFiltro(){ alert("Filtro aplicado (por implementar)"); }
+
+/* --------------------- Query open handler --------------------- */
 (function handleQueryOpen(){ const params = new URLSearchParams(location.search); const open = params.get("open"); if(open){ setTimeout(()=> openReport(open), 400); } })();
