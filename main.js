@@ -50,7 +50,7 @@ supabase.auth.onAuthStateChange((event, session) => {
       nameEl.innerText = nm;
     }
     loadMyReports().then(()=> {
-      if(location.pathname.endsWith("dashboard.html")) renderDashboard();
+      if(location.pathname.endsWith("jdashboard.html")) renderDashboard();
     });
   } else {
     user = null;
