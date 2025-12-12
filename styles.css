@@ -10,4 +10,9 @@
 .gastos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}.cat-card{background:#fff;padding:10px;border-radius:10px;border:1px solid #f0f0f0}.cat-card h4{margin:0 0 6px 0}.cat-card .cat-total{font-weight:800;font-size:16px}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;justify-content:center;align-items:center;padding:16px}.modal-content{background:#fff;padding:18px;border-radius:12px;min-width:320px;width:520px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.modal-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
 .auth-container{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}.auth-card{width:380px;background:#fff;padding:22px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.08);text-align:center}.auth-card input{margin:8px 0}
+.upload-block { background: white; padding: 12px; margin-bottom: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+.lista-preview div { background: #f7f7f7; padding: 8px; margin-top: 6px; border-radius: 6px; font-size: 14px; }
+.preview-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+.preview-table th, .preview-table td { border: 1px solid #ddd; padding: 8px; }
+.preview-table input { width: 100%; }
 @media (max-width:720px){.totales-grid{flex-direction:column}.modal-content{width:100%}}.big-text{font-size:20px;font-weight:800}.muted{color:rgba(255,255,255,0.85)}
