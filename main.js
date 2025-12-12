@@ -92,5 +92,28 @@ function agregarLineaUI(nombre, categoria, total, propina) {
     </div>
   `;
   document.getElementById("gastosList").appendChild(div);
+  async function cargarGastos() {
+  const { data, error } = await supabase
+    .from("expenses")
+    .select("*")
+    .order("fecha", { ascending: false });
+
+  if (error) {
+    console.error("Error cargando gastos", error);
+    return;
+  }
+
+  document.getElementById("gastosList").innerHTML = "";
+
+  data.forEach(g => {
+    agregarLineaUI(
+      g.concepto,
+      g.categoria,
+      Number(g.monto_base),
+      Number(g.propina || 0)
+    );
+  });
+}
+
 }
 
