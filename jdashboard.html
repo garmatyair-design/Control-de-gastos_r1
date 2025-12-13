@@ -2,14 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Dashboard — Comprobación de Gastos</title>
+  <title>Dashboard</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
 <header class="header">
-  <h1>Dashboard de Gastos</h1>
+  <h1>Dashboard</h1>
   <nav>
     <a href="reporte.html" class="btn-outline">Nuevo reporte</a>
     <button id="btnSignOut" class="btn-outline">Salir</button>
@@ -17,49 +16,26 @@
 </header>
 
 <main class="container">
-
-  <!-- KPIs -->
-  <section class="kpi-grid">
-    <div class="kpi-card">
-      <small>Total reportes</small>
+  <div class="totales-grid">
+    <div class="total-card">
+      <small>Total Gastado</small>
+      <strong id="kpiTotal">$0</strong>
+    </div>
+    <div class="total-card">
+      <small>Reportes</small>
       <strong id="kpiReportes">0</strong>
     </div>
-    <div class="kpi-card">
-      <small>Total gastado</small>
-      <strong id="kpiGastado">$0.00</strong>
-    </div>
-    <div class="kpi-card">
-      <small>Promedio por reporte</small>
-      <strong id="kpiPromedio">$0.00</strong>
-    </div>
-  </section>
+  </div>
 
-  <!-- GRÁFICAS -->
-  <section class="card">
-    <h2>Gastos por categoría</h2>
-    <canvas id="chartCategorias" height="120"></canvas>
-  </section>
+  <canvas id="graficaGastos" height="120"></canvas>
 
-  <section class="card">
-    <h2>Gastos por mes</h2>
-    <canvas id="chartMeses" height="120"></canvas>
-  </section>
-
-  <!-- LISTADO -->
-  <section class="card">
-    <h2>Últimos gastos</h2>
-    <div id="ultimosGastos" class="list"></div>
-  </section>
-
+  <h3>Mis reportes</h3>
+  <div id="dashReportesList" class="list"></div>
 </main>
 
-<!-- LIBRERÍAS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- APP -->
-<script src="dashboard.js"></script>
-
+<script src="main.js"></script>
 </body>
 </html>
 
