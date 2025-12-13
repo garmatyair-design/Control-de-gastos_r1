@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Comprobación de Gastos — Login</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Comprobación de Gastos - Login</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -12,39 +12,13 @@
   <div class="auth-card">
     <h1>Comprobación de Gastos</h1>
 
-    <div class="tabs-auth">
-      <button id="tabSignIn" class="tab-auth active">Entrar</button>
-      <button id="tabSignUp" class="tab-auth">Registrar</button>
-    </div>
-
-    <div id="formSignIn">
-      <input id="siEmail" type="email" placeholder="Correo">
-      <input id="siPassword" type="password" placeholder="Contraseña">
-      <button id="btnSignIn" class="btn-blue">Entrar</button>
-    </div>
-
-    <div id="formSignUp" style="display:none">
-      <input id="suName" placeholder="Nombre completo">
-      <input id="suEmail" type="email" placeholder="Correo">
-      <input id="suPassword" type="password" placeholder="Contraseña">
-      <button id="btnSignUp" class="btn-blue">Registrar</button>
-    </div>
+    <input id="siEmail" placeholder="Correo">
+    <input id="siPassword" type="password" placeholder="Contraseña">
+    <button id="btnSignIn" class="btn-blue">Entrar</button>
   </div>
 </main>
 
-<!-- ================= LIBRERÍAS OBLIGATORIAS ================= -->
-
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-  <!-- app scripts -->
-  <script src="js/ocr.js"></script>
-  <script src="js/excel.js"></script>
-  <script src="main.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="main.js"></script>
 </body>
 </html>
-
-
