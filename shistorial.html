@@ -2,62 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Historial de Reportes — Comprobación de Gastos</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Historial — Gastos</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
-<body data-auth="true">
-  <!-- HEADER -->
   <header class="header">
-    <h1>Historial de reportes</h1>
+    <div><h1>Historial de Reportes</h1></div>
     <nav>
-      <a href="jdashboard.html" class="btn-outline">Dashboard</a>
-      <a href="reporte.html" class="btn-outline">Nuevo reporte</a>
+      <a href="dashboard.html" class="btn-outline">Dashboard</a>
       <button id="btnSignOut3" class="btn-outline">Salir</button>
     </nav>
   </header>
 
-  <!-- CONTENIDO -->
   <main class="container">
-
     <section class="card">
-      <h2>Mis reportes</h2>
-
-      <!-- FILTROS (placeholder, no rompe nada) -->
-      <div class="actions" style="margin-bottom:12px">
-        <button id="btnFiltrar" class="btn-outline">
-          Filtrar (próximamente)
-        </button>
-      </div>
-
-      <!-- LISTADO -->
-      <div id="histList" class="list">
-        <!-- main.js renderHistorial() pinta aquí -->
+      <h2>Filtrar</h2>
+      <div class="form-grid">
+        <input id="filtroMes" type="month">
+        <select id="filtroCategoria"><option value="">Todas</option><option>Alimentos</option><option>Hospedaje</option><option>Transporte</option><option>Casetas</option><option>Varios</option></select>
+        <button id="btnFiltrar" class="btn-blue">Aplicar</button>
       </div>
     </section>
 
+    <section class="card">
+      <h2>Reportes</h2>
+      <div id="histList" class="list"></div>
+    </section>
   </main>
 
-  <!-- ================= LIBRERÍAS OBLIGATORIAS ================= -->
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-
-  <!-- Chart (no se usa aquí, pero main.js la puede requerir) -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Excel -->
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-  <!-- OCR (no se usa aquí, pero main.js la referencia) -->
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-
-  <!-- ================= APP ================= -->
-  <script src="js/ocr.js"></script>
-  <script src="js/excel.js"></script>
   <script src="main.js"></script>
-
 </body>
 </html>
