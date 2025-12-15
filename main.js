@@ -116,3 +116,46 @@ async function cargarDashboard() {
 }
 
 if (document.getElementById("chartGastos")) cargarDashboard();
+
+/* ========= HISTORIAL ========= */
+async function cargarHistorial() {
+  const { data, error } = await supabase
+    .from("reports")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  const contenedor = document.getElementById("listaReportes");
+  if (!contenedor) return;
+
+  contenedor.innerHTML = "";
+
+  for (const r of data) {
+    const { data: gastos } = await supabase
+      .from("expenses")
+      .select("monto")
+      .eq("report_id", r.id);
+
+    const totalGastado = gastos.reduce((s, g) => s + g.monto, 0);
+    const resultado = r.monto - totalGastado;
+
+    contenedor.innerHTML += `
+      <div class="row">
+        <strong>${r.nombre}</strong><br>
+        Asignado: $${r.monto} <br>
+        Gastado: $${totalGastado} <br>
+        Resultado: $${resultado}
+      </div>
+    `;
+  }
+}
+
+/* auto-load */
+if (document.getElementById("listaReportes")) {
+  cargarHistorial();
+}
+
