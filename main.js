@@ -1,87 +1,118 @@
+/* ========= SUPABASE ========= */
 const SUPABASE_URL = "https://imhoqcsefymrnpqrhvis.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A";
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let user = null;
-let activeReport = null;
+const supabase = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
 
-/* AUTH */
-supabase.auth.onAuthStateChange((_, session)=>{
-  user = session?.user || null;
-  if(!user && !location.pathname.endsWith("index.html")){
-    location.href="index.html";
-  }
-});
+/* ========= AUTH ========= */
+document.getElementById("btnLogin")?.addEventListener("click", async () => {
+  const email = emailInput.value;
+  const password = passwordInput.value;
 
-document.getElementById("btnSignIn")?.addEventListener("click", async()=>{
-  const email = siEmail.value;
-  const password = siPassword.value;
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if(error) alert(error.message);
-  else location.href="jdashboard.html";
+  if (!error) location.href = "reportes.html";
+  else alert(error.message);
 });
 
-document.querySelectorAll("#btnSignOut").forEach(b=>{
-  b.onclick=()=>supabase.auth.signOut();
+document.getElementById("btnRegister")?.addEventListener("click", async () => {
+  const { error } = await supabase.auth.signUp({
+    email: emailInput.value,
+    password: passwordInput.value
+  });
+  if (!error) alert("Usuario creado, ahora entra");
+  else alert(error.message);
 });
 
-/* DASHBOARD */
-async function loadDashboard(){
-  const { data: reports } = await supabase.from("reports").select("*");
-  const list = document.getElementById("dashReportesList");
-  if(!list) return;
+/* ========= REPORTES ========= */
+let reporteId = null;
+let montoAsignado = 0;
 
-  list.innerHTML="";
+document.getElementById("btnCrearReporte")?.addEventListener("click", async () => {
+  const nombre = repNombre.value;
+  montoAsignado = Number(repMonto.value);
+
+  const { data, error } = await supabase
+    .from("reports")
+    .insert({ nombre, monto: montoAsignado })
+    .select()
+    .single();
+
+  if (!error) {
+    reporteId = data.id;
+    alert("Reporte creado");
+  }
+});
+
+document.getElementById("btnProcesar")?.addEventListener("click", async () => {
+  if (!reporteId) return alert("Crea un reporte primero");
+
+  const file = archivo.files[0];
+  const categoria = categoriaSelect.value;
+
+  let monto = 0;
+
+  if (file.name.endsWith(".xml")) {
+    const text = await file.text();
+    const match = text.match(/Total=\"([\d.]+)/);
+    if (match) monto = Number(match[1]);
+  } else {
+    monto = await leerMontoOCR(file);
+  }
+
+  await supabase.from("expenses").insert({
+    report_id: reporteId,
+    categoria,
+    monto
+  });
+
+  cargarGastos();
+});
+
+async function cargarGastos() {
+  const { data } = await supabase
+    .from("expenses")
+    .select("*")
+    .eq("report_id", reporteId);
+
   let total = 0;
+  listaGastos.innerHTML = "";
 
-  for(const r of reports){
-    const { data: ex } = await supabase.from("expenses").select("total").eq("report_id", r.id);
-    const sum = ex.reduce((s,e)=>s+Number(e.total||0),0);
-    total += sum;
+  data.forEach(g => {
+    total += g.monto;
+    listaGastos.innerHTML += `<div>${g.categoria}: $${g.monto}</div>`;
+  });
 
-    const div=document.createElement("div");
-    div.className="item";
-    div.innerHTML=`<strong>${r.name}</strong> - $${sum}`;
-    list.appendChild(div);
-  }
-
-  document.getElementById("kpiTotal").innerText = "$"+total;
-  document.getElementById("kpiReportes").innerText = reports.length;
+  totalGastado.textContent = `$${total}`;
+  resultado.textContent = `$${montoAsignado - total}`;
 }
-loadDashboard();
 
-/* REPORTES */
-btnCrearReporte?.addEventListener("click", async()=>{
-  const { data } = await supabase.from("reports")
-    .insert({ name: reporteNombre.value, monto_asignado: montoComprobar.value })
-    .select().single();
-  activeReport = data;
-  reportePanel.style.display="block";
-  reporteTitulo.innerText = data.name;
-});
+/* ========= DASHBOARD ========= */
+async function cargarDashboard() {
+  const { data } = await supabase.from("expenses").select("*");
 
-/* CARGA MULTIPLE */
-btnProcesarFactura?.addEventListener("click", async()=>{
-  const files = [...inputFactura.files];
-  const categoria = facturaCategoria.value;
+  let total = 0;
+  const porCategoria = {};
 
-  for(const f of files){
-    let total = 0;
+  data.forEach(e => {
+    total += e.monto;
+    porCategoria[e.categoria] = (porCategoria[e.categoria] || 0) + e.monto;
+  });
 
-    if(f.name.endsWith(".xml")){
-      const text = await f.text();
-      const xml = new DOMParser().parseFromString(text,"text/xml");
-      const c = xml.querySelector("Comprobante");
-      total = Number(c?.getAttribute("Total")||0);
+  kpiTotal.textContent = `$${total}`;
+
+  const top = Object.entries(porCategoria).sort((a,b)=>b[1]-a[1])[0];
+  if (top) kpiConcepto.textContent = top[0];
+
+  new Chart(chartGastos, {
+    type: "bar",
+    data: {
+      labels: Object.keys(porCategoria),
+      datasets: [{ data: Object.values(porCategoria) }]
     }
+  });
+}
 
-    await supabase.from("expenses").insert({
-      report_id: activeReport.id,
-      concepto: f.name,
-      categoria,
-      total
-    });
-  }
-  alert("Archivos procesados");
-});
-
+if (document.getElementById("chartGastos")) cargarDashboard();
