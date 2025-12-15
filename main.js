@@ -1,10 +1,12 @@
 /* main.js - Integración Supabase + OCR + lógica cliente
-   REEMPLAZA los valores SUPABASE_URL y SUPABASE_ANON_KEY con tus credenciales.
+   Reemplaza nada: ya contiene tu SUPABASE_URL y SUPABASE_ANON_KEY (ANON).
+   IMPORTANTE: nunca uses service_role key en frontend.
 */
 
 /* --------------------- CONFIG SUPABASE --------------------- */
-const SUPABASE_URL = "https://TU-PROYECTO.supabase.co"; // reemplaza
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A"; // reemplaza
+const SUPABASE_URL = "https://imhoqcsefymrnpqrhvis.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A";
+
 const supabase = supabaseJs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const STORAGE_BUCKET = "comprobantes";
 
@@ -36,7 +38,7 @@ async function signOut(){
   location.href = "index.html";
 }
 
-/* --------------------- Auth state listener --------------------- */
+/* --------------------- Auth listener --------------------- */
 supabase.auth.onAuthStateChange((event, session) => {
   if(session?.user){
     user = session.user;
@@ -55,15 +57,17 @@ supabase.auth.onAuthStateChange((event, session) => {
 
 /* --------------------- DOM ready wiring --------------------- */
 document.addEventListener("DOMContentLoaded", () => {
-  // login page
+  // Login page
   if(byId("btnSignIn")){
     byId("tabSignIn").onclick = ()=> { byId("formSignIn").style.display="block"; byId("formSignUp").style.display="none"; byId("tabSignIn").classList.add("active"); byId("tabSignUp").classList.remove("active"); }
     byId("tabSignUp").onclick = ()=> { byId("formSignIn").style.display="none"; byId("formSignUp").style.display="block"; byId("tabSignUp").classList.add("active"); byId("tabSignIn").classList.remove("active"); }
+
     byId("btnSignIn").addEventListener("click", async ()=> {
       const email = byId("siEmail").value.trim(); const pass = byId("siPassword").value.trim();
       if(!email || !pass) return alert("Correo y contraseña requeridos.");
       try{ await signIn(email, pass); location.href="dashboard.html"; } catch(e){ alert(e.message || JSON.stringify(e)); }
     });
+
     byId("btnSignUp").addEventListener("click", async ()=> {
       const name = byId("suName").value.trim(); const email = byId("suEmail").value.trim(); const pass = byId("suPassword").value.trim();
       if(!name||!email||!pass) return alert("Completa todos los datos.");
@@ -252,7 +256,6 @@ async function processFactura(){
 async function ocrExtractAmountFromImageFile(file){
   try{
     if(!file.type.startsWith("image/")) return null;
-    // procesarImagenOCR está en js/ocr.js
     const res = await procesarImagenOCR(file, (m) => { if(byId("ocrStatus")) byId("ocrStatus").innerText = m.status + " " + (m.progress? Math.round(m.progress*100)+"%":""); });
     if(byId("ocrStatus")) byId("ocrStatus").innerText = "";
     return res?.monto || null;
