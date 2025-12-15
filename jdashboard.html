@@ -1,62 +1,46 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Dashboard — Gastos</title>
+  <meta charset="utf-8">
+  <title>Dashboard</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="header">
-    <div>
-      <h1>Dashboard de Gastos</h1>
-      <p class="subtitle">Tendencia mensual y análisis por categoría</p>
-    </div>
-    <nav>
-      <span id="userName" class="muted"></span>
-      <a class="btn-yellow" href="reporte.html">Nuevo reporte</a>
-      <a class="btn-outline" href="shistorial.html">Historial</a>
-      <button id="btnSignOut" class="btn-outline">Salir</button>
-    </nav>
-  </header>
 
-  <main class="container">
-    <section class="card">
-      <h2>Histórico de gastos por mes</h2>
-      <canvas id="graficaGastos" height="120"></canvas>
-    </section>
+<h1>Tendencia Mensual de Gastos</h1>
+<canvas id="graficaMensual"></canvas>
 
-    <section class="card">
-      <h2>Categoría con mayor gasto (último año)</h2>
-      <p id="categoriaMayor" class="big-text">—</p>
-    </section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/supabase.js"></script>
 
-    <section class="card">
-      <h2>Exportaciones</h2>
-      <div class="actions">
-        <button id="btnExportDashboard" class="btn-blue">Exportar dashboard a Excel</button>
-      </div>
-    </section>
+<script>
+async function cargarGrafica() {
+  const { data } = await supabase
+    .from('gastos')
+    .select('total, created_at');
 
-    <section class="card">
-      <h2>Reportes recientes</h2>
-      <div id="dashReportesList" class="list"></div>
-    </section>
-  </main>
+  const meses = {};
+  data.forEach(g => {
+    const mes = new Date(g.created_at)
+      .toLocaleString('es-MX', { month: 'short', year: 'numeric' });
+    meses[mes] = (meses[mes] || 0) + Number(g.total);
+  });
 
- 
-  <!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+  new Chart(graficaMensual, {
+    type: 'line',
+    data: {
+      labels: Object.keys(meses),
+      datasets: [{
+        label: 'Gasto mensual',
+        data: Object.values(meses)
+      }]
+    }
+  });
+}
 
-<!-- OCR -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+cargarGrafica();
+</script>
 
-<!-- Excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<!-- Tu código -->
-<script src="js/ocr.js"></script>
-<script src="js/excel.js"></script>
-<script src="main.js"></script>
 </body>
 </html>
