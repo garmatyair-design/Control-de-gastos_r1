@@ -2,37 +2,62 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Reporte</title>
+  <title>Reportes – Gastos</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<header class="header">
-  <h1>Reporte</h1>
+<header>
+  <h2>Nuevo Reporte</h2>
   <nav>
-    <a href="jdashboard.html" class="btn-outline">Dashboard</a>
-    <button id="btnSignOut" class="btn-outline">Salir</button>
+    <a href="dashboard.html">Dashboard</a>
+    <button id="btnLogout">Salir</button>
   </nav>
 </header>
 
 <main class="container">
-  <!-- contenido del reporte -->
+
+<section class="card">
+  <input id="repNombre" placeholder="Nombre del reporte">
+  <input id="repMonto" type="number" placeholder="Monto a comprobar">
+  <button id="btnCrearReporte">Crear Reporte</button>
+</section>
+
+<section class="card">
+  <h3>Cargar gasto</h3>
+
+  <input id="archivo" type="file">
+  <select id="categoria">
+    <option>Alimentos</option>
+    <option>Hospedaje</option>
+    <option>Transporte</option>
+    <option>Casetas</option>
+    <option>Varios</option>
+  </select>
+
+  <button id="btnProcesar">Procesar</button>
+</section>
+
+<section class="card">
+  <h3>Gastos</h3>
+  <div id="listaGastos"></div>
+</section>
+
+<section class="card totals">
+  <div>Total gastado: <strong id="totalGastado">$0</strong></div>
+  <div>Resultado: <strong id="resultado">$0</strong></div>
+</section>
+
 </main>
 
-<!-- SUPABASE -->
+<!-- LIBRERÍAS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-
-<!-- OCR -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-
-<!-- EXCEL -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<!-- SCRIPTS AUX -->
 <script src="js/ocr.js"></script>
 <script src="js/excel.js"></script>
-
-<!-- MAIN -->
 <script src="main.js"></script>
 </body>
 </html>
