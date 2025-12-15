@@ -3,12 +3,19 @@
    IMPORTANTE: nunca uses service_role key en frontend.
 */
 
-/* --------------------- CONFIG SUPABASE --------------------- */
+/* CONFIG SUPABASE */
 const SUPABASE_URL = "https://imhoqcsefymrnpqrhvis.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A
+";
 
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// AÑADIR ESTA LÍNEA OBLIGATORIA
 const STORAGE_BUCKET = "comprobantes";
+
+console.log("Supabase cargado correctamente:", supabase);
+
+
 
 /* --------------------- utilidades --------------------- */
 function uid(prefix="") { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
