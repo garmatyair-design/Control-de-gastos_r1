@@ -26,17 +26,16 @@ function money(n) {
 /* ======================================================
    AUTH: LOGIN Y REGISTRO (USA TUS IDs REALES)
 ====================================================== */
+/* ================= AUTH ================= */
+
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* ---------- LOGIN ---------- */
-  const siEmail = $("siEmail");
-  const siPassword = $("siPassword");
-  const btnSignIn = $("btnSignIn");
-
-  if (siEmail && siPassword && btnSignIn) {
+  // -------- LOGIN --------
+  const btnSignIn = document.getElementById("btnSignIn");
+  if (btnSignIn) {
     btnSignIn.addEventListener("click", async () => {
-      const email = siEmail.value.trim();
-      const password = siPassword.value.trim();
+      const email = document.getElementById("siEmail")?.value.trim();
+      const password = document.getElementById("siPassword")?.value.trim();
 
       if (!email || !password) {
         alert("Correo y contraseña requeridos");
@@ -57,24 +56,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* ---------- REGISTRO ---------- */
-  const suName = $("suName");
-  const suEmail = $("suEmail");
-  const suPassword = $("suPassword");
-  const btnSignUp = $("btnSignUp");
-
-  if (suEmail && suPassword && btnSignUp) {
+  // -------- REGISTRO --------
+  const btnSignUp = document.getElementById("btnSignUp");
+  if (btnSignUp) {
     btnSignUp.addEventListener("click", async () => {
-      const email = suEmail.value.trim();
-      const password = suPassword.value.trim();
-      const name = suName ? suName.value.trim() : "";
+      const name = document.getElementById("suName")?.value.trim();
+      const email = document.getElementById("suEmail")?.value.trim();
+      const password = document.getElementById("suPassword")?.value.trim();
 
-      if (!email || !password) {
+      if (!name || !email || !password) {
         alert("Completa todos los campos");
         return;
       }
 
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -87,9 +82,10 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      alert("Usuario registrado. Ahora inicia sesión.");
+      alert("Usuario creado. Ahora inicia sesión.");
     });
   }
+
 });
 
 /* ======================================================
