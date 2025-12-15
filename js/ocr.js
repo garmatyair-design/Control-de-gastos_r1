@@ -1,48 +1,51 @@
 // js/ocr.js
-// Requiere Tesseract.js (CDN en HTML).
-// Función pública: procesarImagenOCR(file, onProgress) -> {texto,monto,fecha}
+async function leerComprobante(file) {
+  if (file.name.endsWith('.xml')) {
+    return leerXML(file);
+  }
 
-async function procesarImagenOCR(file, onProgress) {
-    if (!file) throw new Error("No se recibió archivo");
-    const { createWorker } = Tesseract;
-    const worker = createWorker({
-        logger: m => { if(onProgress) onProgress(m); }
-    });
-    await worker.load();
-    await worker.loadLanguage('spa');
-    await worker.initialize('spa');
-    const result = await worker.recognize(file);
-    await worker.terminate();
-    const texto = result?.data?.text || "";
-    const monto = detectarMonto(texto);
-    const fecha = detectarFecha(texto);
-    return { texto, monto, fecha };
+  const worker = await Tesseract.createWorker('spa');
+  const { data } = await worker.recognize(file);
+  await worker.terminate();
+
+  return extraerTexto(data.text);
 }
 
-function detectarMonto(texto) {
-    if(!texto) return null;
-    const regex = /(?:\$|\b)(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))/g;
-    let m; const matches = [];
-    while((m = regex.exec(texto)) !== null) matches.push(m[1]);
-    if(matches.length === 0) return null;
-    const nums = matches.map(s => {
-        const lastComma = s.lastIndexOf(',');
-        const lastDot = s.lastIndexOf('.');
-        let norm = s;
-        if(lastComma > lastDot) norm = s.replace(/\./g,'').replace(/,/g,'.');
-        else if(lastDot > lastComma) norm = s.replace(/,/g,'');
-        else norm = s.replace(/,/g,'.');
-        const val = parseFloat(norm);
-        return isNaN(val) ? null : val;
-    }).filter(x => x != null);
-    if(nums.length === 0) return null;
-    return Math.max(...nums);
+function leerXML(file) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const xml = new DOMParser().parseFromString(reader.result, 'text/xml');
+      const comprobante = xml.getElementsByTagName('cfdi:Comprobante')[0];
+      const emisor = xml.getElementsByTagName('cfdi:Emisor')[0];
+
+      resolve({
+        fecha: comprobante?.getAttribute('Fecha') || '',
+        proveedor: emisor?.getAttribute('Nombre') || '',
+        total: comprobante?.getAttribute('Total') || '',
+        categoria: detectarCategoria(
+          (emisor?.getAttribute('Nombre') || '').toLowerCase()
+        )
+      });
+    };
+    reader.readAsText(file);
+  });
 }
 
-function detectarFecha(texto) {
-    if(!texto) return null;
-    const regex = /(\d{2}[\/\-\.]\d{2}[\/\-\.]\d{2,4})/;
-    const m = texto.match(regex);
-    return m ? m[1] : null;
+function extraerTexto(texto) {
+  texto = texto.toLowerCase();
+  return {
+    fecha: '',
+    proveedor: '',
+    total: 0,
+    categoria: detectarCategoria(texto)
+  };
 }
 
+function detectarCategoria(texto) {
+  if (texto.includes('hotel')) return 'Hospedaje';
+  if (texto.includes('restaurante')) return 'Alimentos';
+  if (texto.includes('caseta')) return 'Casetas';
+  if (texto.includes('uber') || texto.includes('taxi')) return 'Transporte';
+  return 'Gastos varios';
+}
