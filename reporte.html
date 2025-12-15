@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8"/>
+  <meta charset="utf-8">
   <title>Reporte</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -16,42 +16,23 @@
 </header>
 
 <main class="container">
-
-<section class="card">
-  <input id="reporteNombre" placeholder="Nombre del reporte">
-  <input id="montoComprobar" type="number" placeholder="Monto asignado">
-  <button id="btnCrearReporte" class="btn-blue">Crear</button>
-</section>
-
-<section id="reportePanel" class="card" style="display:none;">
-  <h2 id="reporteTitulo"></h2>
-
-  <!-- CARGA EXISTENTE, SOLO MEJORADA -->
-  <div class="upload-row">
-    <input id="inputFactura" type="file" multiple>
-    <select id="facturaCategoria">
-      <option>Alimentos</option>
-      <option>Hospedaje</option>
-      <option>Transporte</option>
-      <option>Casetas</option>
-      <option>Varios</option>
-    </select>
-    <button id="btnProcesarFactura" class="btn-blue">Procesar</button>
-  </div>
-
-  <div id="gastosList" class="list"></div>
-</section>
-
+  <!-- contenido del reporte -->
 </main>
 
+<!-- SUPABASE -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+
+<!-- OCR -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<!-- EXCEL -->
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
+<!-- SCRIPTS AUX -->
 <script src="js/ocr.js"></script>
 <script src="js/excel.js"></script>
+
+<!-- MAIN -->
 <script src="main.js"></script>
 </body>
 </html>
-
