@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Login</title>
+  <title>Login – Comprobación de Gastos</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -10,16 +10,23 @@
 <main class="auth-container">
   <div class="auth-card">
     <h1>Comprobación de Gastos</h1>
-    <input id="siEmail" type="email" placeholder="Correo">
-    <input id="siPassword" type="password" placeholder="Contraseña">
-    <button id="btnSignIn" class="btn-blue">Entrar</button>
+
+    <input id="email" type="email" placeholder="Correo">
+    <input id="password" type="password" placeholder="Contraseña">
+
+    <button id="btnLogin">Entrar</button>
+    <button id="btnRegister" class="outline">Registrar</button>
   </div>
 </main>
 
-<!-- SUPABASE (OBLIGATORIO) -->
+<!-- LIBRERÍAS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-<!-- MAIN -->
+<script src="js/ocr.js"></script>
+<script src="js/excel.js"></script>
 <script src="main.js"></script>
 </body>
 </html>
