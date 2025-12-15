@@ -1,18 +1,6 @@
-:root{--azul:#003366;--amarillo:#FFC300;--fondo:#f2f2f2;--card-bg:#ffffff;--text:#003366}
-*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:var(--fondo);color:var(--text);-webkit-font-smoothing:antialiased}
-.header{background:var(--azul);color:#fff;padding:18px 28px;display:flex;justify-content:space-between;align-items:center}.header h1{margin:0;font-size:20px}.subtitle{margin:4px 0 0;font-size:13px;opacity:0.9}
-.btn-yellow{background:var(--amarillo);color:var(--azul);padding:10px 16px;border-radius:10px;text-decoration:none;font-weight:700}.btn-blue{background:var(--azul);color:var(--amarillo);padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}.btn-outline{background:transparent;color:var(--azul);padding:8px 12px;border-radius:10px;border:2px solid rgba(0,51,102,0.08);cursor:pointer}
-.container{max-width:1100px;margin:24px auto;padding:0 16px}.card{background:var(--card-bg);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 6px 18px rgba(0,0,0,0.06)}
-.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:10px}.field label{display:block;font-size:13px;margin-bottom:6px;color:rgba(0,0,0,0.6)}input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #e6e6e6;background:#fff;color:var(--azul);font-size:14px}
-.actions{display:flex;gap:10px;margin-top:12px}.list{display:flex;flex-direction:column;gap:8px}.item{border-radius:10px;padding:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid rgba(0,0,0,0.04)}
-.reporte-header{display:flex;justify-content:space-between;align-items:center}.totales-grid{display:flex;gap:12px;margin-top:12px;flex-wrap:wrap}.total-card{background:#fafafa;padding:12px;border-radius:10px;min-width:160px;text-align:left}.total-card small{display:block;color:rgba(0,0,0,0.6)}.total-card strong{display:block;font-size:18px;margin-top:6px}
-.tabs{display:flex;gap:8px;margin-top:12px}.tab{background:#eee;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600}.tab.active{background:var(--amarillo);color:var(--azul)}.tab-content{margin-top:12px;padding:12px;border-radius:10px;background:#fff;border:1px dashed rgba(0,0,0,0.04)}.upload-row{display:flex;gap:8px;align-items:center}.help{font-size:13px;color:rgba(0,0,0,0.6);margin-top:8px}
-.gastos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-top:12px}.cat-card{background:#fff;padding:10px;border-radius:10px;border:1px solid #f0f0f0}.cat-card h4{margin:0 0 6px 0}.cat-card .cat-total{font-weight:800;font-size:16px}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:flex;justify-content:center;align-items:center;padding:16px}.modal-content{background:#fff;padding:18px;border-radius:12px;min-width:320px;width:520px;box-shadow:0 10px 30px rgba(0,0,0,0.2)}.modal-actions{display:flex;gap:8px;margin-top:12px;justify-content:flex-end}
-.auth-container{display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}.auth-card{width:380px;background:#fff;padding:22px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.08);text-align:center}.auth-card input{margin:8px 0}
-.upload-block { background: white; padding: 12px; margin-bottom: 12px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-.lista-preview div { background: #f7f7f7; padding: 8px; margin-top: 6px; border-radius: 6px; font-size: 14px; }
-.preview-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
-.preview-table th, .preview-table td { border: 1px solid #ddd; padding: 8px; }
-.preview-table input { width: 100%; }
-@media (max-width:720px){.totales-grid{flex-direction:column}.modal-content{width:100%}}.big-text{font-size:20px;font-weight:800}.muted{color:rgba(255,255,255,0.85)}
+body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
+h1 { margin-bottom: 20px; }
+.card { background: white; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
+input, button { padding: 8px; margin: 5px 0; }
+table { width: 100%; background: white; border-collapse: collapse; }
+th, td { border: 1px solid #ccc; padding: 8px; }
