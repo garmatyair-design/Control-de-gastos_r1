@@ -1,29 +1,28 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gestión de Gastos</title>
-  <link rel="stylesheet" href="styles.css" />
+<meta charset="utf-8" />
+<title>Comprobación de Gastos</title>
+<link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+<h1>Gestión de Reportes de Gastos</h1>
 
-  <main class="login-card">
-    <h2>Acceso</h2>
 
-    <input id="siEmail" type="email" placeholder="Correo" />
-    <input id="siPassword" type="password" placeholder="Contraseña" />
-    <button id="btnSignIn">Ingresar</button>
-  </main>
+<section class="card">
+<h2>Nuevo Reporte</h2>
+<input id="nombreReporte" placeholder="Nombre del reporte" />
+<input id="montoViaticos" type="number" placeholder="Monto de viáticos" />
+<button id="crearReporte">Crear reporte</button>
+</section>
 
-  <!-- LIBRERÍAS (ORDEN CRÍTICO) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 
-  <!-- TU CÓDIGO -->
-  <script src="js/ocr.js"></script>
-  <script src="js/excel.js"></script>
-  <script src="main.js"></script>
+<section class="card">
+<h2>Reportes existentes</h2>
+<ul id="listaReportes"></ul>
+</section>
 
+
+<script src="main.js"></script>
 </body>
 </html>
