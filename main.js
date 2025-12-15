@@ -1,17 +1,17 @@
 /* ================= CONFIG SUPABASE ================= */
 const SUPABASE_URL = "https://imhoqcsefymrnpqrhvis.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A";
+const SUPABASE_ANON_KEY = "TU_ANON_KEY_AQUI";
 
-/* ===== INIT SUPABASE (CORRECTO) ===== */
-if (!window.supabase) {
-  alert("Supabase no está cargado. Revisa el script CDN.");
-  throw new Error("Supabase missing");
-}
-
+/* ================= INIT SUPABASE (CORRECTO) ================= */
 const supabase = window.supabase.createClient(
   SUPABASE_URL,
   SUPABASE_ANON_KEY
 );
+
+console.log("Supabase cargado correctamente", supabase);
+
+}
+;
 
 const STORAGE_BUCKET = "comprobantes";
 
