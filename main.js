@@ -65,7 +65,7 @@ document.addEventListener("DOMContentLoaded", () => {
     byId("btnSignIn").addEventListener("click", async ()=> {
       const email = byId("siEmail").value.trim(); const pass = byId("siPassword").value.trim();
       if(!email || !pass) return alert("Correo y contraseña requeridos.");
-      try{ await signIn(email, pass); location.href="dashboard.html"; } catch(e){ alert(e.message || JSON.stringify(e)); }
+      try{ await signIn(email, pass); location.href="jdashboard.html"; } catch(e){ alert(e.message || JSON.stringify(e)); }
     });
 
     byId("btnSignUp").addEventListener("click", async ()=> {
@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
   if(byId("btnSignOut3")) byId("btnSignOut3").addEventListener("click", signOut);
 
   // dashboard page
-  if(location.pathname.endsWith("dashboard.html")){
+  if(location.pathname.endsWith("jdashboard.html")){
     byId("btnExportDashboard")?.addEventListener("click", exportDashboardExcel);
     loadMyReports().then(()=> renderDashboard());
   }
@@ -111,7 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // historial page
-  if(location.pathname.endsWith("historial.html")){
+  if(location.pathname.endsWith("shistorial.html")){
     byId("btnFiltrar")?.addEventListener("click", aplicarFiltro);
     loadMyReports().then(()=> renderHistorial());
   }
