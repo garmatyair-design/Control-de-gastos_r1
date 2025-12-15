@@ -1,148 +1,39 @@
-<!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Nuevo Reporte — Gastos</title>
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <header class="header">
-    <h1>Nuevo Reporte</h1>
-    <nav>
-      <a href="jdashboard.html" class="btn-outline">Dashboard</a>
-      <a href="shistorial.html" class="btn-outline">Historial</a>
-      <button id="btnSignOut2" class="btn-outline">Salir</button>
-    </nav>
-  </header>
+<script>
+const params = new URLSearchParams(location.search);
+const reporteId = params.get('id');
 
-  <main class="container">
-    <section class="card">
-      <h2>Crear reporte</h2>
-      <div class="form-grid">
-        <div class="field">
-          <label>Nombre del reporte</label>
-          <input id="reporteNombre" placeholder="Ej. Visita Monterrey 14-16 Dic">
-        </div>
-        <div class="field">
-          <label>Monto a comprobar (viáticos)</label>
-          <input id="montoComprobar" type="number" placeholder="3500">
-        </div>
-        <div class="field">
-          <label>Fecha</label>
-          <input id="fechaReporte" type="date">
-        </div>
-        <div class="field">
-          <label>Ejecutivo</label>
-          <input id="ejecutivoReporte" placeholder="Nombre del ejecutivo">
-        </div>
-      </div>
+async function cargarGastos() {
+  const { data } = await supabase
+    .from('gastos')
+    .select('*')
+    .eq('reporte_id', reporteId);
 
-      <div class="actions">
-        <button id="btnCrearReporte" class="btn-blue">Crear Reporte</button>
-        <button id="btnLoadMyReports" class="btn-outline">Cargar mis reportes</button>
-      </div>
-    </section>
+  tablaGastos.innerHTML = '';
+  data.forEach(g => {
+    tablaGastos.innerHTML += `
+      <tr>
+        <td>${g.fecha}</td>
+        <td>${g.proveedor}</td>
+        <td>${g.categoria}</td>
+        <td>${g.total}</td>
+      </tr>`;
+  });
+}
 
-    <section id="reportePanel" class="card" style="display:none;">
-      <div class="reporte-header">
-        <div>
-          <h2 id="reporteTitulo">-</h2>
-          <p id="reporteMeta" class="muted"></p>
-        </div>
-        <div class="reporte-actions">
-          <button id="btnExportReporte" class="btn-yellow">Exportar Excel</button>
-          <button id="btnCerrarReporte" class="btn-outline">Cerrar reporte</button>
-        </div>
-      </div>
+procesar.onclick = async () => {
+  const file = archivo.files[0];
+  const datos = await leerComprobante(file);
 
-      <div class="totales-grid">
-        <div class="total-card"><small>Monto asignado</small><strong id="lblMontoAsignado">$0.00</strong></div>
-        <div class="total-card"><small>Total gastado</small><strong id="lblTotalGastado">$0.00</strong></div>
-        <div class="total-card"><small>Resultado</small><strong id="lblResultado">$0.00</strong></div>
-      </div>
+  await supabase.from('gastos').insert({
+    reporte_id: reporteId,
+    fecha: datos.fecha || new Date().toISOString().slice(0,10),
+    proveedor: datos.proveedor,
+    categoria: datos.categoria,
+    total: datos.total || 0
+  });
 
-      <div class="tabs">
-        <button class="tab active" data-tab="factura">Factura (XML/PDF)</button>
-        <button class="tab" data-tab="ticket">Ticket (imagen/PDF)</button>
-        <button class="tab" data-tab="manual">Manual</button>
-      </div>
+  cargarGastos();
+};
 
-      <div id="factura" class="tab-content active">
-        <div class="upload-row">
-          <input id="inputFactura" type="file" accept=".xml,.pdf">
-          <button id="btnProcesarFactura" class="btn-blue">Procesar y guardar</button>
-        </div>
-        <p class="help">Si subes XML CFDI el sistema intentará extraer el total.</p>
-      </div>
-
-      <div id="ticket" class="tab-content">
-        <div class="upload-row">
-          <input id="inputTicket" type="file" accept="image/*,.pdf">
-          <input id="ticketMonto" placeholder="Monto (opcional)">
-          <select id="ticketCategoria">
-            <option>Alimentos</option>
-            <option>Hospedaje</option>
-            <option>Transporte</option>
-            <option>Casetas</option>
-            <option>Varios</option>
-          </select>
-          <button id="btnAgregarTicket" class="btn-blue">Agregar</button>
-        </div>
-        <div id="ocrStatus" style="margin-top:8px;font-size:13px;color:var(--azul)"></div>
-      </div>
-
-      <div id="manual" class="tab-content">
-        <div class="form-grid">
-          <input id="manualConcepto" placeholder="Concepto">
-          <input id="manualMonto" type="number" placeholder="Monto">
-          <input id="manualFecha" type="date">
-          <select id="manualCategoria"><option>Alimentos</option><option>Hospedaje</option><option>Transporte</option><option>Casetas</option><option>Varios</option></select>
-        </div>
-        <div class="actions"><button id="btnAgregarManual" class="btn-blue">Agregar gasto</button></div>
-      </div>
-
-      <div class="gastos-grid" id="gastosPorCategoria"></div>
-
-      <div>
-        <h3>Gastos</h3>
-        <div id="gastosList" class="list"></div>
-      </div>
-    </section>
-  </main>
-
-  <!-- modal editar -->
-  <div id="modalEdit" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h3>Editar gasto</h3>
-      <div class="form-grid">
-        <input id="editConcepto" placeholder="Concepto">
-        <input id="editMonto" type="number" placeholder="Monto">
-        <input id="editFecha" type="date">
-        <select id="editCategoria"><option>Alimentos</option><option>Hospedaje</option><option>Transporte</option><option>Casetas</option><option>Varios</option></select>
-        <input id="editPropina" type="number" placeholder="Propina (solo Alimentos)">
-      </div>
-      <div class="modal-actions">
-        <button id="btnCancelEdit" class="btn-outline">Cancelar</button>
-        <button id="btnSaveEdit" class="btn-blue">Guardar</button>
-      </div>
-    </div>
-  </div>
-
- 
-  <!-- libs -->
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-
-<!-- OCR -->
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-
-<!-- Excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-
-<!-- Tu código -->
-<script src="js/ocr.js"></script>
-<script src="js/excel.js"></script>
-<script src="main.js"></script>
-</body>
-</html>
+cargarGastos();
+</script>
