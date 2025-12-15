@@ -1,32 +1,47 @@
 <!doctype html>
 <html lang="es">
 <head>
-  <meta charset="utf-8">
-  <title>Login – Comprobación de Gastos</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Login — Comprobación de Gastos</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <main class="auth-container">
+    <div class="auth-card">
+      <h1>Comprobación de Gastos</h1>
+      <p class="muted">Inicia sesión o crea una cuenta</p>
 
-<main class="auth-container">
-  <div class="auth-card">
-    <h1>Comprobación de Gastos</h1>
+      <div class="tabs-auth">
+        <button id="tabSignIn" class="tab-auth active">Entrar</button>
+        <button id="tabSignUp" class="tab-auth">Registrar</button>
+      </div>
 
-    <input id="email" type="email" placeholder="Correo">
-    <input id="password" type="password" placeholder="Contraseña">
+      <div id="formSignIn" class="auth-form">
+        <input id="siEmail" type="email" placeholder="Correo" />
+        <input id="siPassword" type="password" placeholder="Contraseña" />
+        <button id="btnSignIn" class="btn-blue">Entrar</button>
+      </div>
 
-    <button id="btnLogin">Entrar</button>
-    <button id="btnRegister" class="outline">Registrar</button>
-  </div>
-</main>
+      <div id="formSignUp" class="auth-form" style="display:none;">
+        <input id="suName" placeholder="Nombre completo" />
+        <input id="suEmail" type="email" placeholder="Correo" />
+        <input id="suPassword" type="password" placeholder="Contraseña" />
+        <button id="btnSignUp" class="btn-blue">Registrar</button>
+      </div>
 
-<!-- LIBRERÍAS -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+      <div style="margin-top:12px;text-align:center">
+        <a href="dashboard.html" class="btn-outline">Probar sin login (demo)</a>
+      </div>
+    </div>
+  </main>
 
-<script src="js/ocr.js"></script>
-<script src="js/excel.js"></script>
-<script src="main.js"></script>
+  <!-- libs -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.5/dist/tesseract.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+  <script src="main.js"></script>
 </body>
 </html>
