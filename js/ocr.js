@@ -1,9 +1,9 @@
 // js/ocr.js
-// Requiere Tesseract.js cargado en el HTML (CDN).
-// Funciones públicas: procesarImagenOCR(fileOrCanvas, onProgress) -> {texto,monto,fecha}
+// Requiere Tesseract.js (CDN en HTML).
+// Función pública: procesarImagenOCR(file, onProgress) -> {texto,monto,fecha}
 
-async function procesarImagenOCR(source, onProgress) {
-    // source: File | HTMLCanvasElement
+async function procesarImagenOCR(file, onProgress) {
+    if (!file) throw new Error("No se recibió archivo");
     const { createWorker } = Tesseract;
     const worker = createWorker({
         logger: m => { if(onProgress) onProgress(m); }
@@ -11,14 +11,7 @@ async function procesarImagenOCR(source, onProgress) {
     await worker.load();
     await worker.loadLanguage('spa');
     await worker.initialize('spa');
-
-    let result;
-    if(source instanceof HTMLCanvasElement){
-        result = await worker.recognize(source);
-    } else {
-        result = await worker.recognize(source);
-    }
-
+    const result = await worker.recognize(file);
     await worker.terminate();
     const texto = result?.data?.text || "";
     const monto = detectarMonto(texto);
@@ -28,7 +21,6 @@ async function procesarImagenOCR(source, onProgress) {
 
 function detectarMonto(texto) {
     if(!texto) return null;
-    // busca patrones monetarios
     const regex = /(?:\$|\b)(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{2}))/g;
     let m; const matches = [];
     while((m = regex.exec(texto)) !== null) matches.push(m[1]);
@@ -44,7 +36,6 @@ function detectarMonto(texto) {
         return isNaN(val) ? null : val;
     }).filter(x => x != null);
     if(nums.length === 0) return null;
-    // escoge el mayor (suele ser el total)
     return Math.max(...nums);
 }
 
@@ -55,18 +46,3 @@ function detectarFecha(texto) {
     return m ? m[1] : null;
 }
 
-// wrapper para usar en main.js
-async function ocrExtractAmountFromImageFile(file){
-    try{
-        if(!file) return null;
-        // si es canvas (ya procesado) o File
-        const res = await procesarImagenOCR(file, (m) => {
-            // simple progress log; main.js puede leer #ocrStatus
-            // caller decide cómo mostrar
-        });
-        return res?.monto || null;
-    } catch(e){
-        console.error("OCR generic error", e);
-        return null;
-    }
-}
