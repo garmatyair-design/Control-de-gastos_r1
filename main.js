@@ -1,4 +1,6 @@
-/* ================= CONFIG SUPABASE ================= */
+/* ======================================================
+   CONFIG SUPABASE
+====================================================== */
 const SUPABASE_URL = "https://imhoqcsefymrnpqrhvis.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImltaG9xY3NlZnltcm5wcXJodmlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU0OTY5ODIsImV4cCI6MjA4MTA3Mjk4Mn0.jplAkiMPXl6V5KT4P9h3OXAJNOwSsF9ZVz6nVIo6a9A";
 
@@ -7,32 +9,37 @@ const supabase = window.supabase.createClient(
   SUPABASE_ANON_KEY
 );
 
-/* ================= HELPERS ================= */
+/* ======================================================
+   HELPERS
+====================================================== */
 function $(id) {
   return document.getElementById(id);
 }
 
-/* ================= AUTH (LOGIN / REGISTER) ================= */
+function money(n) {
+  return Number(n || 0).toLocaleString("es-MX", {
+    style: "currency",
+    currency: "MXN"
+  });
+}
+
+/* ======================================================
+   AUTH: LOGIN Y REGISTRO (USA TUS IDs REALES)
+====================================================== */
 document.addEventListener("DOMContentLoaded", () => {
 
-  const emailInput = $("emailInput");
-  const passwordInput = $("passwordInput");
-  const nameInput = $("nameInput");
-  const btnLogin = $("btnLogin");
-  const btnRegister = $("btnRegister");
+  /* ---------- LOGIN ---------- */
+  const siEmail = $("siEmail");
+  const siPassword = $("siPassword");
+  const btnSignIn = $("btnSignIn");
 
-  // Si no es página de login/registro → no ejecutar nada
-  if (!emailInput || !passwordInput || (!btnLogin && !btnRegister)) {
-    return;
-  }
-
-  if (btnLogin) {
-    btnLogin.addEventListener("click", async () => {
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
+  if (siEmail && siPassword && btnSignIn) {
+    btnSignIn.addEventListener("click", async () => {
+      const email = siEmail.value.trim();
+      const password = siPassword.value.trim();
 
       if (!email || !password) {
-        alert("Completa correo y contraseña");
+        alert("Correo y contraseña requeridos");
         return;
       }
 
@@ -50,14 +57,20 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (btnRegister) {
-    btnRegister.addEventListener("click", async () => {
-      const email = emailInput.value.trim();
-      const password = passwordInput.value.trim();
-      const name = nameInput ? nameInput.value.trim() : "";
+  /* ---------- REGISTRO ---------- */
+  const suName = $("suName");
+  const suEmail = $("suEmail");
+  const suPassword = $("suPassword");
+  const btnSignUp = $("btnSignUp");
+
+  if (suEmail && suPassword && btnSignUp) {
+    btnSignUp.addEventListener("click", async () => {
+      const email = suEmail.value.trim();
+      const password = suPassword.value.trim();
+      const name = suName ? suName.value.trim() : "";
 
       if (!email || !password) {
-        alert("Completa correo y contraseña");
+        alert("Completa todos los campos");
         return;
       }
 
@@ -65,7 +78,7 @@ document.addEventListener("DOMContentLoaded", () => {
         email,
         password,
         options: {
-          data: { name }
+          data: { full_name: name }
         }
       });
 
@@ -74,52 +87,118 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      alert("Cuenta creada, ahora inicia sesión");
+      alert("Usuario registrado. Ahora inicia sesión.");
     });
   }
 });
 
-/* ================= SESIÓN ACTIVA ================= */
+/* ======================================================
+   PROTECCIÓN DE PÁGINAS (REQUIEREN SESIÓN)
+====================================================== */
 document.addEventListener("DOMContentLoaded", async () => {
-  const { data } = await supabase.auth.getSession();
-
   const requiresAuth = document.body.dataset.auth === "true";
-  if (requiresAuth && !data.session) {
+  if (!requiresAuth) return;
+
+  const { data } = await supabase.auth.getSession();
+  if (!data.session) {
     location.href = "index.html";
   }
 });
 
-/* ================= LOGOUT ================= */
+/* ======================================================
+   LOGOUT
+====================================================== */
 document.addEventListener("DOMContentLoaded", () => {
-  const btnLogout = $("btnLogout");
-  if (!btnLogout) return;
+  const btnSignOut =
+    $("btnSignOut") || $("btnSignOut2") || $("btnSignOut3");
 
-  btnLogout.addEventListener("click", async () => {
+  if (!btnSignOut) return;
+
+  btnSignOut.addEventListener("click", async () => {
     await supabase.auth.signOut();
     location.href = "index.html";
   });
 });
 
-/* ================= CREAR REPORTE ================= */
-document.addEventListener("DOMContentLoaded", () => {
+/* ======================================================
+   DASHBOARD: KPIs Y LISTADO DE REPORTES
+====================================================== */
+document.addEventListener("DOMContentLoaded", async () => {
 
+  const kpiReportes = $("kpiReportes");
+  const kpiMonto = $("kpiMonto");
+  const lista = $("dashReportesList");
+
+  if (!kpiReportes && !kpiMonto && !lista) return;
+
+  const { data: reports, error } = await supabase
+    .from("reports")
+    .select("*");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  if (kpiReportes) {
+    kpiReportes.innerText = reports.length;
+  }
+
+  if (kpiMonto) {
+    const total = reports.reduce(
+      (s, r) => s + Number(r.monto_asignado || 0),
+      0
+    );
+    kpiMonto.innerText = money(total);
+  }
+
+  if (lista) {
+    lista.innerHTML = "";
+    if (!reports.length) {
+      lista.innerHTML = `<div class="item">No hay reportes</div>`;
+      return;
+    }
+
+    reports.forEach(r => {
+      const el = document.createElement("div");
+      el.className = "item";
+      el.innerHTML = `
+        <div>
+          <strong>${r.name}</strong>
+          <div class="muted">${r.fecha} • ${money(r.monto_asignado)}</div>
+        </div>
+        <button class="btn-outline" onclick="location.href='reporte.html?open=${r.id}'">
+          Abrir
+        </button>
+      `;
+      lista.appendChild(el);
+    });
+  }
+});
+
+/* ======================================================
+   CREAR REPORTE
+====================================================== */
+document.addEventListener("DOMContentLoaded", () => {
   const btnCrearReporte = $("btnCrearReporte");
   if (!btnCrearReporte) return;
 
   btnCrearReporte.addEventListener("click", async () => {
     const nombre = $("reporteNombre")?.value.trim();
-    const monto = parseFloat($("reporteMonto")?.value || 0);
-    const fecha = $("reporteFecha")?.value;
+    const monto = Number($("montoComprobar")?.value || 0);
+    const fecha = $("fechaReporte")?.value;
+    const ejecutivo = $("ejecutivoReporte")?.value || "";
 
     if (!nombre || !monto || !fecha) {
-      alert("Completa todos los campos del reporte");
+      alert("Completa nombre, monto y fecha");
       return;
     }
 
     const { error } = await supabase.from("reports").insert([{
-      nombre,
+      name: nombre,
       monto_asignado: monto,
-      fecha
+      fecha,
+      ejecutivo
     }]);
 
     if (error) {
@@ -131,70 +210,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-/* ================= LISTAR REPORTES ================= */
-document.addEventListener("DOMContentLoaded", async () => {
-
-  const contenedor = $("listaReportes");
-  if (!contenedor) return;
-
-  const { data, error } = await supabase
-    .from("reports")
-    .select("*")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error(error);
-    return;
-  }
-
-  contenedor.innerHTML = "";
-  data.forEach(r => {
-    contenedor.innerHTML += `
-      <div class="reporte-item">
-        <strong>${r.nombre}</strong><br>
-        Monto: $${r.monto_asignado}
-      </div>
-    `;
-  });
-});
-
-/* ================= KPIs ================= */
-document.addEventListener("DOMContentLoaded", async () => {
-
-  const kpiReportes = $("kpiReportes");
-  const kpiMonto = $("kpiMonto");
-
-  if (!kpiReportes && !kpiMonto) return;
-
-  const { data, error } = await supabase.from("reports").select("monto_asignado");
-
-  if (error) return;
-
-  if (kpiReportes) {
-    kpiReportes.textContent = data.length;
-  }
-
-  if (kpiMonto) {
-    const total = data.reduce((s, r) => s + r.monto_asignado, 0);
-    kpiMonto.textContent = `$${total.toFixed(2)}`;
-  }
-});
-
-/* ================= CARGA DE ARCHIVOS (SIMPLE) ================= */
+/* ======================================================
+   CARGA SIMPLE DE ARCHIVOS (BASE FUNCIONAL)
+====================================================== */
 document.addEventListener("DOMContentLoaded", () => {
 
-  const inputFiles = $("inputFiles");
-  const btnProcesar = $("btnProcesar");
+  const inputFactura = $("inputFactura");
+  const btnProcesarFactura = $("btnProcesarFactura");
 
-  if (!inputFiles || !btnProcesar) return;
+  if (!inputFactura || !btnProcesarFactura) return;
 
-  btnProcesar.addEventListener("click", () => {
-    if (!inputFiles.files.length) {
-      alert("Selecciona al menos un archivo");
+  btnProcesarFactura.addEventListener("click", () => {
+    if (!inputFactura.files.length) {
+      alert("Selecciona un archivo");
       return;
     }
 
-    alert(`Archivos seleccionados: ${inputFiles.files.length}`);
-    // Aquí va tu lógica de XML / OCR / Excel
+    alert("Archivo detectado correctamente (base estable)");
+    // Aquí se conecta XML / OCR (ya lo tenías funcionando)
   });
 });
