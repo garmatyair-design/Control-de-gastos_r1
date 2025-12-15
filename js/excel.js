@@ -1,5 +1,5 @@
 // js/excel.js
-// Requiere SheetJS (XLSX) cargado en el HTML (CDN).
+// Requiere SheetJS (XLSX) cargado en HTML.
 
 function exportarReporteAExcel(nombreArchivo, datos, totales) {
     const filas = [];
